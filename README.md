@@ -2,36 +2,12 @@
 
 Portal de notícias do **SIS — Simulado Interno Sidarta** com front-end em Next.js.
 
-## Como acessar o site
-
-### 1) Acesso local (recomendado para desenvolvimento)
-
-1. Instale as dependências:
+## Rodando localmente
 
 ```bash
 npm install
-```
-
-2. Inicie o servidor de desenvolvimento:
-
-```bash
 npm run dev
 ```
-
-3. Abra no navegador:
-
-- http://localhost:3000
-
-### 2) Build de produção local (opcional)
-
-```bash
-npm run build
-npm run start
-```
-
-Depois, abra:
-
-- http://localhost:3000
 
 ## Rotas
 
