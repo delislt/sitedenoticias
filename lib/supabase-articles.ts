@@ -8,11 +8,11 @@ export type DbArticle = {
   subtitle: string;
   category: Category;
   author: string;
-  date: string;
+  published_at: string;
   reading_time: string;
   cover_image: string;
   featured: boolean;
-  content: string[];
+  content: { paragraphs: string[] };
   created_at: string;
 };
 
@@ -23,11 +23,11 @@ export function dbToArticle(db: DbArticle): Article {
     subtitle: db.subtitle,
     category: db.category,
     author: db.author,
-    date: db.date,
-    readingTime: db.reading_time,
-    coverImage: db.cover_image,
-    featured: db.featured,
-    content: db.content,
+    date: db.published_at ?? '',
+    readingTime: db.reading_time ?? '',
+    coverImage: db.cover_image ?? '',
+    featured: db.featured ?? false,
+    content: db.content?.paragraphs ?? [],
   };
 }
 
@@ -38,11 +38,11 @@ export function articleToDb(article: Article): Omit<DbArticle, 'id' | 'created_a
     subtitle: article.subtitle,
     category: article.category,
     author: article.author,
-    date: article.date,
+    published_at: article.date,
     reading_time: article.readingTime,
     cover_image: article.coverImage,
     featured: article.featured ?? false,
-    content: article.content,
+    content: { paragraphs: article.content },
   };
 }
 
@@ -77,7 +77,10 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 export async function createArticle(article: Article): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from('articles').insert(articleToDb(article));
-  if (error) throw error;
+  if (error) {
+    console.error('createArticle error:', error);
+    throw error;
+  }
 }
 
 export async function updateArticle(slug: string, article: Article): Promise<void> {
@@ -86,11 +89,26 @@ export async function updateArticle(slug: string, article: Article): Promise<voi
     .from('articles')
     .update(articleToDb(article))
     .eq('slug', slug);
-  if (error) throw error;
+  if (error) {
+    console.error('updateArticle error:', error);
+    throw error;
+  }
 }
 
 export async function deleteArticle(slug: string): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from('articles').delete().eq('slug', slug);
   if (error) throw error;
+}
+
+export async function uploadCoverImage(file: File): Promise<string> {
+  const supabase = getSupabase();
+  const ext = file.name.split('.').pop();
+  const filename = `cover-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('article-images')
+    .upload(filename, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from('article-images').getPublicUrl(filename);
+  return data.publicUrl;
 }
