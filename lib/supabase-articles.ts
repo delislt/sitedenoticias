@@ -46,40 +46,6 @@ export function dbToArticle(db: DbArticle): Article {
   };
 }
 
-/** Para INSERT: não envia published_at, o banco usa NOW() como default */
-type InsertPayload = Omit<DbArticle, 'id' | 'created_at' | 'published_at'>;
-
-export function articleToInsert(article: Article): InsertPayload {
-  return {
-    slug: article.slug,
-    title: article.title,
-    subtitle: article.subtitle,
-    category: article.category,
-    author: article.author,
-    reading_time: article.readingTime,
-    cover_image: article.coverImage,
-    featured: article.featured ?? false,
-    content: { paragraphs: article.content },
-  };
-}
-
-/** Para UPDATE: envia tudo menos published_at (preserva data original) e created_at */
-type UpdatePayload = Omit<DbArticle, 'id' | 'created_at' | 'published_at'>;
-
-export function articleToUpdate(article: Article): UpdatePayload {
-  return {
-    slug: article.slug,
-    title: article.title,
-    subtitle: article.subtitle,
-    category: article.category,
-    author: article.author,
-    reading_time: article.readingTime,
-    cover_image: article.coverImage,
-    featured: article.featured ?? false,
-    content: { paragraphs: article.content },
-  };
-}
-
 function getSupabase() {
   return createClient();
 }
@@ -110,7 +76,18 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 
 export async function createArticle(article: Article): Promise<void> {
   const supabase = getSupabase();
-  const payload = articleToInsert(article);
+  const payload = {
+    slug: article.slug,
+    title: article.title,
+    subtitle: article.subtitle,
+    category: article.category,
+    author: article.author,
+    published_at: new Date().toISOString(),
+    reading_time: article.readingTime,
+    cover_image: article.coverImage,
+    featured: article.featured ?? false,
+    content: { paragraphs: article.content },
+  };
   const { error } = await supabase.from('articles').insert([payload]);
   if (error) {
     console.error('createArticle error:', JSON.stringify(error));
@@ -120,7 +97,18 @@ export async function createArticle(article: Article): Promise<void> {
 
 export async function updateArticle(slug: string, article: Article): Promise<void> {
   const supabase = getSupabase();
-  const payload = articleToUpdate(article);
+  const payload = {
+    slug: article.slug,
+    title: article.title,
+    subtitle: article.subtitle,
+    category: article.category,
+    author: article.author,
+    reading_time: article.readingTime,
+    cover_image: article.coverImage,
+    featured: article.featured ?? false,
+    content: { paragraphs: article.content },
+    // published_at NÃO é enviado — preserva a data original
+  };
   const { error } = await supabase
     .from('articles')
     .update(payload)
