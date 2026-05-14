@@ -16,10 +16,44 @@ export type DbArticle = {
   created_at: string;
 };
 
+/** Retorna a data/hora atual no fuso de Brasília como string ISO */
+function nowBrasilia(): string {
+  // Pega o offset real de Brasília neste momento (-03:00 ou -02:00 no horário de verão)
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = Object.fromEntries(
+    formatter.formatToParts(now).map(({ type, value }) => [type, value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
+/** Exibe a data/hora armazenada — interpreta como horário de Brasília */
 function toBrDateTime(dateStr: string): string {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
+
+  // Se vier sem timezone (ex: "2026-05-14T20:55:00"), trata como Brasília
+  // Se vier com Z ou offset, converte para Brasília
+  let date: Date;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateStr) && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+    // Sem timezone: assume Brasília, só formata diretamente
+    const [datePart, timePart] = dateStr.split('T');
+    const [y, m, d] = datePart.split('-');
+    const [h, min] = timePart.split(':');
+    return `${d}/${m}/${y} ${h}:${min}`;
+  }
+
+  date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
+
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -82,7 +116,7 @@ export async function createArticle(article: Article): Promise<void> {
     subtitle: article.subtitle,
     category: article.category,
     author: article.author,
-    published_at: new Date().toISOString(),
+    published_at: nowBrasilia(), // grava no horário de Brasília, sem conversão UTC
     reading_time: article.readingTime,
     cover_image: article.coverImage,
     featured: article.featured ?? false,
