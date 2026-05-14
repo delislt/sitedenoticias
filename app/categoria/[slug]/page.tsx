@@ -1,15 +1,23 @@
 import { notFound } from 'next/navigation';
 import { ArticleCard } from '@/components/ArticleCard';
-import { categoryLabels, getArticlesByCategory, type Category } from '@/data/news';
+import { categoryLabels, type Category } from '@/data/news';
+import { fetchAllArticles } from '@/lib/supabase-articles';
 
-export default function CategoryPage({ params }: { params: { slug: Category } }) {
-  const validCategories: Category[] = ['juridico', 'csnu', 'historico'];
+export const revalidate = 0;
 
+const validCategories: Category[] = ['juridico', 'csnu', 'historico'];
+
+export async function generateStaticParams() {
+  return validCategories.map((slug) => ({ slug }));
+}
+
+export default async function CategoryPage({ params }: { params: { slug: Category } }) {
   if (!validCategories.includes(params.slug)) {
     notFound();
   }
 
-  const categoryArticles = getArticlesByCategory(params.slug);
+  const all = await fetchAllArticles();
+  const categoryArticles = all.filter((a) => a.category === params.slug);
 
   return (
     <div className="container-premium space-y-8 py-10">

@@ -1,10 +1,17 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { CategoryBadge } from '@/components/CategoryBadge';
-import { articles } from '@/data/news';
+import { fetchAllArticles, fetchArticleBySlug } from '@/lib/supabase-articles';
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = articles.find((item) => item.slug === params.slug);
+export const revalidate = 0;
+
+export async function generateStaticParams() {
+  const articles = await fetchAllArticles();
+  return articles.map((a) => ({ slug: a.slug }));
+}
+
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const article = await fetchArticleBySlug(params.slug);
 
   if (!article) notFound();
 

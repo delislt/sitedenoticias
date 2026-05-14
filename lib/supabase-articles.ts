@@ -46,18 +46,25 @@ export function articleToDb(article: Article): Omit<DbArticle, 'id' | 'created_a
   };
 }
 
+function getSupabase() {
+  return createClient();
+}
+
 export async function fetchAllArticles(): Promise<Article[]> {
-  const supabase = createClient();
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('articles')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) {
+    console.error('fetchAllArticles error:', error);
+    return [];
+  }
   return (data as DbArticle[]).map(dbToArticle);
 }
 
 export async function fetchArticleBySlug(slug: string): Promise<Article | null> {
-  const supabase = createClient();
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('articles')
     .select('*')
@@ -68,13 +75,13 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 }
 
 export async function createArticle(article: Article): Promise<void> {
-  const supabase = createClient();
+  const supabase = getSupabase();
   const { error } = await supabase.from('articles').insert(articleToDb(article));
   if (error) throw error;
 }
 
 export async function updateArticle(slug: string, article: Article): Promise<void> {
-  const supabase = createClient();
+  const supabase = getSupabase();
   const { error } = await supabase
     .from('articles')
     .update(articleToDb(article))
@@ -83,7 +90,7 @@ export async function updateArticle(slug: string, article: Article): Promise<voi
 }
 
 export async function deleteArticle(slug: string): Promise<void> {
-  const supabase = createClient();
+  const supabase = getSupabase();
   const { error } = await supabase.from('articles').delete().eq('slug', slug);
   if (error) throw error;
 }
