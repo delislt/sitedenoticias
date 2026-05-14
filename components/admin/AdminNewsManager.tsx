@@ -1,41 +1,60 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { categoryLabels } from '@/data/news';
 import {
-  ADMIN_STORAGE_KEY,
   categories,
   emptyArticle,
-  getDefaultArticles,
   parseArticleBody,
   stringifyArticleBody,
   type EditableArticle
 } from '@/lib/admin-news';
+import {
+  fetchAllArticles,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+} from '@/lib/supabase-articles';
 
 export function AdminNewsManager() {
   const [news, setNews] = useState<EditableArticle[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [editBuffer, setEditBuffer] = useState<EditableArticle | null>(null);
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem(ADMIN_STORAGE_KEY);
-    if (saved) {
-      setNews(JSON.parse(saved));
-      return;
+  const loadArticles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const articles = await fetchAllArticles();
+      setNews(articles);
+    } catch (e) {
+      setMessage('Erro ao carregar notícias.');
+    } finally {
+      setLoading(false);
     }
-    setNews(getDefaultArticles());
   }, []);
 
-  useEffect(() => {
-    if (news.length > 0) {
-      window.localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(news));
-    }
-  }, [news]);
+  useEffect(() => { loadArticles(); }, [loadArticles]);
 
-  const selected = useMemo(() => news.find((article) => article.slug === selectedSlug) ?? emptyArticle(), [news, selectedSlug]);
+  const selected = useMemo(
+    () => editBuffer ?? news.find((a) => a.slug === selectedSlug) ?? emptyArticle(),
+    [editBuffer, news, selectedSlug]
+  );
 
-  function handleCreate() {
-    const draft = {
+  function handleSelect(slug: string) {
+    setSelectedSlug(slug);
+    setEditBuffer(news.find((a) => a.slug === slug) ?? null);
+    setMessage('');
+  }
+
+  function updateField<K extends keyof EditableArticle>(field: K, value: EditableArticle[K]) {
+    setEditBuffer((prev) => prev ? { ...prev, [field]: value } : prev);
+  }
+
+  async function handleCreate() {
+    const draft: EditableArticle = {
       ...emptyArticle(),
       slug: `nova-materia-${Date.now()}`,
       title: 'Nova matéria SIS',
@@ -46,43 +65,82 @@ export function AdminNewsManager() {
       coverImage: 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
       content: ['Escreva aqui o primeiro parágrafo da matéria.']
     };
-    setNews((prev) => [draft, ...prev]);
-    setSelectedSlug(draft.slug);
-    setMessage('Matéria criada com sucesso.');
+    setSaving(true);
+    try {
+      await createArticle(draft);
+      await loadArticles();
+      setSelectedSlug(draft.slug);
+      setEditBuffer(draft);
+      setMessage('Matéria criada com sucesso.');
+    } catch (e) {
+      setMessage('Erro ao criar matéria.');
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleDelete(slug: string) {
-    setNews((prev) => prev.filter((item) => item.slug !== slug));
-    setSelectedSlug(null);
-    setMessage('Matéria removida.');
+  async function handleDelete(slug: string) {
+    setSaving(true);
+    try {
+      await deleteArticle(slug);
+      await loadArticles();
+      setSelectedSlug(null);
+      setEditBuffer(null);
+      setMessage('Matéria removida.');
+    } catch (e) {
+      setMessage('Erro ao remover matéria.');
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleSave() {
-    if (!selectedSlug) return;
-    setNews((prev) => prev.map((item) => (item.slug === selectedSlug ? selected : item)));
-    setMessage('Alterações salvas localmente.');
-  }
-
-  function updateField<K extends keyof EditableArticle>(field: K, value: EditableArticle[K]) {
-    if (!selectedSlug) return;
-    setNews((prev) => prev.map((item) => (item.slug === selectedSlug ? { ...item, [field]: value } : item)));
+  async function handleSave() {
+    if (!selectedSlug || !editBuffer) return;
+    setSaving(true);
+    try {
+      await updateArticle(selectedSlug, editBuffer);
+      await loadArticles();
+      setMessage('Alterações salvas com sucesso.');
+    } catch (e) {
+      setMessage('Erro ao salvar alterações.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
       <aside className="card-border p-4">
-        <button onClick={handleCreate} className="mb-4 w-full bg-gold px-4 py-2 font-semibold text-ink hover:bg-amber-400">+ Nova notícia</button>
-        <div className="space-y-2">
-          {news.map((article) => (
-            <div key={article.slug} className="rounded border border-zinc-800 p-3">
-              <button className="text-left" onClick={() => setSelectedSlug(article.slug)}>
-                <p className="font-semibold text-zinc-100">{article.title}</p>
-                <p className="text-xs text-zinc-500">{categoryLabels[article.category]}</p>
-              </button>
-              <button onClick={() => handleDelete(article.slug)} className="mt-2 text-xs text-rose-300 hover:text-rose-200">Remover</button>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={handleCreate}
+          disabled={saving}
+          className="mb-4 w-full bg-gold px-4 py-2 font-semibold text-ink hover:bg-amber-400 disabled:opacity-50"
+        >
+          + Nova notícia
+        </button>
+        {loading ? (
+          <p className="text-sm text-zinc-400">Carregando...</p>
+        ) : news.length === 0 ? (
+          <p className="text-sm text-zinc-400">Nenhuma notícia cadastrada.</p>
+        ) : (
+          <div className="space-y-2">
+            {news.map((article) => (
+              <div key={article.slug} className="rounded border border-zinc-800 p-3">
+                <button className="text-left" onClick={() => handleSelect(article.slug)}>
+                  <p className="font-semibold text-zinc-100">{article.title}</p>
+                  <p className="text-xs text-zinc-500">{categoryLabels[article.category]}</p>
+                </button>
+                <button
+                  onClick={() => handleDelete(article.slug)}
+                  disabled={saving}
+                  className="mt-2 text-xs text-rose-300 hover:text-rose-200 disabled:opacity-50"
+                >
+                  Remover
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </aside>
 
       <section className="card-border p-6">
@@ -102,6 +160,16 @@ export function AdminNewsManager() {
                 ))}
               </select>
             </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={selected.featured ?? false}
+                  onChange={(e) => updateField('featured', e.target.checked)}
+                />
+                Destaque
+              </label>
+            </div>
             <input value={selected.coverImage} onChange={(e) => updateField('coverImage', e.target.value)} className="w-full bg-zinc-900 p-3" placeholder="URL da capa" />
             <textarea
               value={stringifyArticleBody(selected.content)}
@@ -110,7 +178,13 @@ export function AdminNewsManager() {
               placeholder="Corpo da matéria (separe parágrafos com linha em branco)"
             />
             <div className="flex items-center gap-3">
-              <button onClick={handleSave} className="bg-gold px-5 py-2 font-semibold text-ink hover:bg-amber-400">Salvar alterações</button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-gold px-5 py-2 font-semibold text-ink hover:bg-amber-400 disabled:opacity-50"
+              >
+                {saving ? 'Salvando...' : 'Salvar alterações'}
+              </button>
               <span className="text-sm text-zinc-400">{message}</span>
             </div>
           </div>
