@@ -66,7 +66,7 @@ export function AdminNewsManager() {
       title: '',
       subtitle: '',
       author: '',
-      date: new Date().toLocaleDateString('pt-BR'),
+      date: '',
       readingTime: '5 min',
       coverImage: '',
       content: ['']
@@ -85,7 +85,6 @@ export function AdminNewsManager() {
   function handleContentChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const raw = e.target.value;
     setRawContent(raw);
-    // Divide em parágrafos por linha em branco
     const paragraphs = raw.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     updateField('content', paragraphs.length > 0 ? paragraphs : ['']);
   }
@@ -98,7 +97,7 @@ export function AdminNewsManager() {
     try {
       const url = await uploadCoverImage(file);
       updateField('coverImage', url);
-      showMsg('✓ Imagem enviada com sucesso!');
+      showMsg('\u2713 Imagem enviada com sucesso!');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       showMsg('Erro no upload: ' + msg, true);
@@ -110,7 +109,6 @@ export function AdminNewsManager() {
 
   async function handleSave() {
     if (!editBuffer) return;
-    // Sincroniza conteúdo do textarea antes de salvar
     const paragraphs = rawContent.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     const toSave: EditableArticle = {
       ...editBuffer,
@@ -121,10 +119,10 @@ export function AdminNewsManager() {
     try {
       if (mode === 'creating') {
         await createArticle(toSave);
-        showMsg('✓ Matéria publicada com sucesso!');
+        showMsg('\u2713 Matéria publicada com sucesso!');
       } else if (mode === 'editing' && originalSlug) {
         await updateArticle(originalSlug, toSave);
-        showMsg('✓ Alterações salvas com sucesso!');
+        showMsg('\u2713 Alterações salvas com sucesso!');
       }
       await loadArticles();
       setOriginalSlug(toSave.slug);
@@ -185,6 +183,7 @@ export function AdminNewsManager() {
                 <button className="w-full text-left" onClick={() => handleSelect(a)}>
                   <p className="font-semibold text-zinc-100 text-sm">{a.title || '(sem título)'}</p>
                   <p className="text-xs text-zinc-500">{categoryLabels[a.category]}</p>
+                  {a.date && <p className="text-xs text-zinc-600 mt-0.5">{a.date}</p>}
                 </button>
                 <button onClick={() => handleDelete(a.slug)} disabled={saving}
                   className="mt-1 text-xs text-rose-400 hover:text-rose-300 disabled:opacity-50">
@@ -208,13 +207,31 @@ export function AdminNewsManager() {
               {mode === 'creating' ? '+ Nova matéria' : 'Editando matéria'}
             </p>
 
-            {/* Campos básicos */}
+            {/* Data automática (somente leitura) */}
+            {mode === 'creating' ? (
+              <div className="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path strokeLinecap="round" d="M12 6v6l4 2" />
+                </svg>
+                Data e horário serão registrados automaticamente ao publicar.
+              </div>
+            ) : editBuffer.date ? (
+              <div className="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path strokeLinecap="round" d="M12 6v6l4 2" />
+                </svg>
+                Publicado em: <span className="text-zinc-200">{editBuffer.date}</span>
+              </div>
+            ) : null}
+
+            {/* Campos básicos (sem data) */}
             <div className="grid gap-4 md:grid-cols-2">
               {([
                 ['title', 'Título', 'text', 'Título da matéria'],
                 ['subtitle', 'Subtítulo', 'text', 'Subtítulo'],
                 ['author', 'Autor', 'text', 'Nome do autor'],
-                ['date', 'Data (DD/MM/AAAA)', 'text', '14/05/2026'],
                 ['readingTime', 'Tempo de leitura', 'text', 'ex: 5 min'],
               ] as const).map(([field, label, type, placeholder]) => (
                 <div key={field} className="flex flex-col gap-1">
@@ -249,7 +266,6 @@ export function AdminNewsManager() {
             <div className="flex flex-col gap-2">
               <label className="text-xs text-zinc-500">Imagem de capa</label>
               <div className="rounded border border-zinc-700 p-4 space-y-3">
-                {/* Upload de arquivo */}
                 <div>
                   <p className="text-xs text-zinc-500 mb-2">Enviar arquivo do computador:</p>
                   <input
@@ -262,7 +278,6 @@ export function AdminNewsManager() {
                   />
                   {uploading && <p className="mt-1 text-xs text-amber-400 animate-pulse">Enviando...</p>}
                 </div>
-                {/* URL manual */}
                 <div>
                   <p className="text-xs text-zinc-500 mb-1">Ou cole uma URL:</p>
                   <input
@@ -272,11 +287,10 @@ export function AdminNewsManager() {
                     placeholder="https://..."
                   />
                 </div>
-                {/* Preview */}
                 {editBuffer.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={editBuffer.coverImage} alt="Preview da capa"
-                    className="h-36 w-full rounded object-cover border border-zinc-700" />
+                    className="w-full rounded border border-zinc-700" style={{ aspectRatio: '16/9', objectFit: 'contain', background: '#18181b' }} />
                 ) : (
                   <div className="h-20 w-full rounded border border-dashed border-zinc-700 flex items-center justify-center">
                     <span className="text-xs text-zinc-600">Sem imagem</span>
@@ -294,7 +308,7 @@ export function AdminNewsManager() {
                 value={rawContent}
                 onChange={handleContentChange}
                 className="h-72 w-full rounded bg-zinc-900 p-4 text-zinc-100 leading-relaxed outline-none focus:ring-1 focus:ring-gold resize-y"
-                placeholder={`Escreva o primeiro parágrafo aqui...\n\nDê Enter duas vezes para começar um novo parágrafo.\n\nCada bloco separado por linha em branco vira um parágrafo no artigo.`}
+                placeholder={`Escreva o primeiro parágrafo aqui...\n\nDê Enter duas vezes para começar um novo parágrafo.`}
               />
               <p className="text-xs text-zinc-600">{editBuffer.content.filter(Boolean).length} parágrafo(s)</p>
             </div>

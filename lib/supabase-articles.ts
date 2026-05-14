@@ -16,25 +16,18 @@ export type DbArticle = {
   created_at: string;
 };
 
-/** Converte DD/MM/AAAA → YYYY-MM-DD para o banco */
-function toIsoDate(date: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-  const parts = date.split('/');
-  if (parts.length === 3) {
-    const [d, m, y] = parts;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-  }
-  return new Date().toISOString().split('T')[0];
-}
-
-/** Converte YYYY-MM-DD → DD/MM/AAAA para exibição */
-function toBrDate(date: string): string {
-  if (!date) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    const [y, m, d] = date.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  return date;
+function toBrDateTime(dateStr: string): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Sao_Paulo',
+  }).format(date);
 }
 
 export function dbToArticle(db: DbArticle): Article {
@@ -44,7 +37,7 @@ export function dbToArticle(db: DbArticle): Article {
     subtitle: db.subtitle,
     category: db.category,
     author: db.author,
-    date: toBrDate(db.published_at),
+    date: toBrDateTime(db.published_at ?? db.created_at),
     readingTime: db.reading_time ?? '',
     coverImage: db.cover_image ?? '',
     featured: db.featured ?? false,
@@ -53,14 +46,33 @@ export function dbToArticle(db: DbArticle): Article {
   };
 }
 
-export function articleToDb(article: Article): Omit<DbArticle, 'id' | 'created_at'> {
+/** Para INSERT: não envia published_at, o banco usa NOW() como default */
+type InsertPayload = Omit<DbArticle, 'id' | 'created_at' | 'published_at'>;
+
+export function articleToInsert(article: Article): InsertPayload {
   return {
     slug: article.slug,
     title: article.title,
     subtitle: article.subtitle,
     category: article.category,
     author: article.author,
-    published_at: toIsoDate(article.date),
+    reading_time: article.readingTime,
+    cover_image: article.coverImage,
+    featured: article.featured ?? false,
+    content: { paragraphs: article.content },
+  };
+}
+
+/** Para UPDATE: envia tudo menos published_at (preserva data original) e created_at */
+type UpdatePayload = Omit<DbArticle, 'id' | 'created_at' | 'published_at'>;
+
+export function articleToUpdate(article: Article): UpdatePayload {
+  return {
+    slug: article.slug,
+    title: article.title,
+    subtitle: article.subtitle,
+    category: article.category,
+    author: article.author,
     reading_time: article.readingTime,
     cover_image: article.coverImage,
     featured: article.featured ?? false,
@@ -98,7 +110,7 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 
 export async function createArticle(article: Article): Promise<void> {
   const supabase = getSupabase();
-  const payload = articleToDb(article);
+  const payload = articleToInsert(article);
   const { error } = await supabase.from('articles').insert([payload]);
   if (error) {
     console.error('createArticle error:', JSON.stringify(error));
@@ -108,7 +120,7 @@ export async function createArticle(article: Article): Promise<void> {
 
 export async function updateArticle(slug: string, article: Article): Promise<void> {
   const supabase = getSupabase();
-  const payload = articleToDb(article);
+  const payload = articleToUpdate(article);
   const { error } = await supabase
     .from('articles')
     .update(payload)
