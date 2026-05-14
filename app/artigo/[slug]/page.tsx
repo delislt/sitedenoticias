@@ -24,9 +24,11 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         <div className="text-sm uppercase tracking-[0.14em] text-zinc-500">
           {article.author} · {article.date} · {article.readingTime} de leitura
         </div>
-        <div className="relative h-[360px] overflow-hidden border border-zinc-800">
-          <Image src={article.coverImage} alt={article.title} fill className="object-cover" />
-        </div>
+        {article.coverImage && (
+          <div className="relative h-[360px] overflow-hidden border border-zinc-800">
+            <Image src={article.coverImage} alt={article.title} fill className="object-cover" />
+          </div>
+        )}
         <div className="space-y-6 text-lg leading-relaxed text-zinc-200">
           {article.content.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
