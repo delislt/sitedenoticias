@@ -18,15 +18,12 @@ export type DbArticle = {
 
 /** Converte DD/MM/AAAA → YYYY-MM-DD para o banco */
 function toIsoDate(date: string): string {
-  // Se já está no formato ISO, retorna como está
   if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-  // Converte DD/MM/AAAA
   const parts = date.split('/');
   if (parts.length === 3) {
     const [d, m, y] = parts;
     return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   }
-  // Fallback: data de hoje
   return new Date().toISOString().split('T')[0];
 }
 
@@ -52,6 +49,7 @@ export function dbToArticle(db: DbArticle): Article {
     coverImage: db.cover_image ?? '',
     featured: db.featured ?? false,
     content: db.content?.paragraphs ?? [],
+    created_at: db.created_at,
   };
 }
 
@@ -101,7 +99,7 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 export async function createArticle(article: Article): Promise<void> {
   const supabase = getSupabase();
   const payload = articleToDb(article);
-  const { error } = await supabase.from('articles').insert(payload);
+  const { error } = await supabase.from('articles').insert([payload]);
   if (error) {
     console.error('createArticle error:', JSON.stringify(error));
     throw new Error(error.message || error.details || JSON.stringify(error));
