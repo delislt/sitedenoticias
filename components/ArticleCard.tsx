@@ -6,6 +6,7 @@ import { CategoryBadge } from './CategoryBadge';
 function formatDate(dateStr?: string) {
   if (!dateStr) return null;
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -17,7 +18,7 @@ function formatDate(dateStr?: string) {
 }
 
 export function ArticleCard({ article }: { article: Article }) {
-  const postedAt = formatDate((article as any).created_at ?? (article as any).publishedAt);
+  const postedAt = formatDate(article.created_at);
 
   return (
     <article className="group card-border overflow-hidden transition hover:border-gold/50">

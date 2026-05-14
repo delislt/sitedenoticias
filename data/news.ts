@@ -7,6 +7,7 @@ export type Article = {
   category: Category;
   author: string;
   date: string;
+  created_at?: string;
   readingTime: string;
   coverImage: string;
   featured?: boolean;
