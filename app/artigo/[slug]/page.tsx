@@ -10,8 +10,13 @@ export async function generateStaticParams() {
   return articles.map((a) => ({ slug: a.slug }));
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = await fetchArticleBySlug(params.slug);
+export default async function ArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const article = await fetchArticleBySlug(slug);
 
   if (!article) notFound();
 
@@ -26,7 +31,15 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         </div>
         {article.coverImage && (
           <div className="relative h-[360px] overflow-hidden border border-zinc-800">
-            <Image src={article.coverImage} alt={article.title} fill className="object-cover" />
+            <Image
+              src={article.coverImage}
+              alt={article.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 896px"
+              quality={100}
+              priority
+              className="object-cover"
+            />
           </div>
         )}
         <div className="space-y-6 text-lg leading-relaxed text-zinc-200">
