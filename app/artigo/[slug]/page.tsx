@@ -30,7 +30,7 @@ export default async function ArticlePage({
           {article.author} · {article.date} · {article.readingTime} de leitura
         </div>
         {article.coverImage && (
-          <div className="relative h-[360px] overflow-hidden border border-zinc-800">
+          <div className="relative w-full overflow-hidden border border-zinc-800" style={{ aspectRatio: '16/9' }}>
             <Image
               src={article.coverImage}
               alt={article.title}
@@ -38,7 +38,7 @@ export default async function ArticlePage({
               sizes="(max-width: 768px) 100vw, 896px"
               quality={100}
               priority
-              className="object-cover"
+              className="object-contain"
             />
           </div>
         )}

@@ -23,7 +23,8 @@ export function ArticleCard({ article }: { article: Article }) {
   return (
     <article className="group card-border overflow-hidden transition hover:border-gold/50">
       <Link href={`/artigo/${article.slug}`} className="block cursor-pointer">
-        <div className="relative h-48 overflow-hidden bg-zinc-800">
+        {/* Imagem com aspect-ratio 16/9 — nunca corta */}
+        <div className="relative w-full overflow-hidden bg-zinc-800" style={{ aspectRatio: '16/9' }}>
           {article.coverImage ? (
             <Image
               src={article.coverImage}
@@ -31,7 +32,7 @@ export function ArticleCard({ article }: { article: Article }) {
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               quality={100}
-              className="object-cover transition duration-500 group-hover:scale-105"
+              className="object-contain transition duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
