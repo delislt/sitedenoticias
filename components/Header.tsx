@@ -9,7 +9,6 @@ const navItems = [
   { href: '/categoria/csnu', label: 'CSNU' },
   { href: '/categoria/historico', label: 'Histórico' },
   { href: '/sobre', label: 'Sobre o SIS' },
-  { href: '/busca', label: 'Busca' },
   { href: '/admin', label: 'Admin' },
 ];
 
