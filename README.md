@@ -61,18 +61,6 @@ npm run dev
 
 The repository includes `package.json`, `package-lock.json`, Next.js configuration files, and environment file examples, indicating a standard local development workflow with Node.js. 
 
-## Environment variables
-
-Create a `.env.local` file with the required project credentials. The repository includes `.env.local.example`, which indicates that environment variables are part of the setup. 
-
-Example:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...
-```
-
 ## Links
 
 - Live site: [sisnoticias.vercel.app](https://sisnoticias.vercel.app)
