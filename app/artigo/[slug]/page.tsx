@@ -36,7 +36,6 @@ export default async function ArticlePage({
               alt={article.title}
               fill
               sizes="(max-width: 768px) 100vw, 896px"
-              quality={100}
               priority
               className="object-contain"
             />
