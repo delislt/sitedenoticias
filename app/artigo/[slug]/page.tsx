@@ -28,7 +28,7 @@ export default async function ArticlePage({
         <h1 className="font-display text-4xl leading-tight md:text-5xl">{article.title}</h1>
         <p className="text-xl text-zinc-300">{article.subtitle}</p>
         <div className="text-sm uppercase tracking-[0.14em] text-zinc-500">
-          {article.author} · <DateDisplay dateStr={article.created_at} /> · {article.readingTime} de leitura
+          {article.author} &middot; <DateDisplay dateStr={article.created_at ?? ''} /> &middot; {article.readingTime} de leitura
         </div>
         {article.coverImage && (
           <div className="relative w-full overflow-hidden border border-zinc-800" style={{ aspectRatio: '16/9' }}>
