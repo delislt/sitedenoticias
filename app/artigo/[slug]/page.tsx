@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { CategoryBadge } from '@/components/CategoryBadge';
+import { DateDisplay } from '@/components/DateDisplay';
 import { fetchAllArticles, fetchArticleBySlug } from '@/lib/supabase-articles';
 
 export const revalidate = 0;
@@ -27,7 +28,7 @@ export default async function ArticlePage({
         <h1 className="font-display text-4xl leading-tight md:text-5xl">{article.title}</h1>
         <p className="text-xl text-zinc-300">{article.subtitle}</p>
         <div className="text-sm uppercase tracking-[0.14em] text-zinc-500">
-          {article.author} · {article.date} · {article.readingTime} de leitura
+          {article.author} · <DateDisplay dateStr={article.created_at} /> · {article.readingTime} de leitura
         </div>
         {article.coverImage && (
           <div className="relative w-full overflow-hidden border border-zinc-800" style={{ aspectRatio: '16/9' }}>
