@@ -16,40 +16,12 @@ export type DbArticle = {
   created_at: string;
 };
 
-/** Grava a hora atual no fuso de Brasília como string local (sem Z) */
-function nowBrasilia(): string {
-  const now = new Date();
-  const formatter = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-  // sv-SE produz "2026-05-14 20:55:00"
-  return formatter.format(now).replace(' ', 'T');
-}
-
 /**
- * Formata data para exibição.
- * Strings sem timezone (ex: "2026-05-14T20:55:00") são extraídas via regex
- * sem passar pelo Date() — evita conversão de fuso no servidor Node.
+ * Converte string UTC (ex: "2026-05-14 23:42:53.598775+00") para Brasília.
+ * O new Date() lida corretamente com strings que têm offset +00.
  */
 function toBrDateTime(dateStr: string): string {
   if (!dateStr) return '';
-
-  const localMatch = dateStr.match(
-    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/
-  );
-  if (localMatch) {
-    const [, y, m, d, h, min] = localMatch;
-    return `${d}/${m}/${y} ${h}:${min}`;
-  }
-
-  // String com timezone (ex: "2026-05-14T23:55:00.000Z") — converte para Brasília
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
   return new Intl.DateTimeFormat('pt-BR', {
@@ -63,13 +35,14 @@ function toBrDateTime(dateStr: string): string {
 }
 
 export function dbToArticle(db: DbArticle): Article {
+  // created_at sempre tem offset UTC (+00) — conversão para Brasília é confiável
   return {
     slug: db.slug,
     title: db.title,
     subtitle: db.subtitle,
     category: db.category,
     author: db.author,
-    date: toBrDateTime(db.published_at ?? db.created_at),
+    date: toBrDateTime(db.created_at),
     readingTime: db.reading_time ?? '',
     coverImage: db.cover_image ?? '',
     featured: db.featured ?? false,
@@ -114,7 +87,8 @@ export async function createArticle(article: Article): Promise<void> {
     subtitle: article.subtitle,
     category: article.category,
     author: article.author,
-    published_at: nowBrasilia(),
+    // published_at é coluna tipo DATE — envia apenas YYYY-MM-DD
+    published_at: new Date().toISOString().split('T')[0],
     reading_time: article.readingTime,
     cover_image: article.coverImage,
     featured: article.featured ?? false,
