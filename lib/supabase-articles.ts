@@ -16,10 +16,6 @@ export type DbArticle = {
   created_at: string;
 };
 
-/**
- * Converte string UTC (ex: "2026-05-14 23:42:53.598775+00") para Brasília.
- * O new Date() lida corretamente com strings que têm offset +00.
- */
 function toBrDateTime(dateStr: string): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -35,7 +31,6 @@ function toBrDateTime(dateStr: string): string {
 }
 
 export function dbToArticle(db: DbArticle): Article {
-  // created_at sempre tem offset UTC (+00) — conversão para Brasília é confiável
   return {
     slug: db.slug,
     title: db.title,
@@ -87,7 +82,6 @@ export async function createArticle(article: Article): Promise<void> {
     subtitle: article.subtitle,
     category: article.category,
     author: article.author,
-    // published_at é coluna tipo DATE — envia apenas YYYY-MM-DD
     published_at: new Date().toISOString().split('T')[0],
     reading_time: article.readingTime,
     cover_image: article.coverImage,
@@ -130,16 +124,21 @@ export async function deleteArticle(slug: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// Upload via API Route do servidor (usa service role key, nunca exposta ao cliente)
 export async function uploadCoverImage(file: File): Promise<string> {
-  const supabase = getSupabase();
-  const ext = file.name.split('.').pop() ?? 'jpg';
-  const filename = `cover-${Date.now()}.${ext}`;
-  const { error } = await supabase.storage
-    .from('article-images')
-    .upload(filename, file, { upsert: true, contentType: file.type });
-  if (error) {
-    throw new Error('Erro no upload: ' + error.message);
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error('Erro no upload: ' + (json.error ?? 'desconhecido'));
   }
-  const { data } = supabase.storage.from('article-images').getPublicUrl(filename);
-  return data.publicUrl;
+
+  return json.url;
 }
