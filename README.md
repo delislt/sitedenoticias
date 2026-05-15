@@ -73,15 +73,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
-## Project identity
-
-SIS Notícias combines the structure of a digital newsroom with the identity of a school project. The live version uses the tagline “Premium coverage of SIS — Simulado Interno Sidarta,” reinforcing both the editorial concept and the academic context behind the website.
-
 ## Links
 
 - Live site: [sisnoticias.vercel.app](https://sisnoticias.vercel.app)
 - Repository: [github.com/delislt/sitedenoticias](https://github.com/delislt/sitedenoticias) 
 
-## Current status
-
-At the time this README was prepared, the public homepage displayed the message “Nenhuma notícia publicada ainda.”, which suggests the platform is ready to receive new content through the admin publishing workflow.
