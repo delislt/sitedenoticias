@@ -33,8 +33,12 @@ export function Header() {
       >
         <div className="container-premium flex items-center justify-between py-4">
           {/* Logo */}
-          <Link href="/" className="font-display text-2xl font-bold tracking-wide text-white">
-            SIS <span className="text-gold">Jornal</span>
+          <Link
+            href="/"
+            className="text-3xl text-white tracking-wide"
+            style={{ fontFamily: 'GentleHearts, serif' }}
+          >
+            Jornal <span className="text-gold">SIS</span>
           </Link>
 
           {/* Nav desktop */}
@@ -64,7 +68,7 @@ export function Header() {
         </div>
       </header>
 
-      {/* Drawer mobile — fora do <header> para não herdar estilos */}
+      {/* Drawer mobile */}
       {open && (
         <div
           className="fixed inset-0 z-30 flex flex-col md:hidden"
