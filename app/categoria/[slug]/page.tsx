@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArticleCard } from '@/components/ArticleCard';
 import { categoryLabels, type Category } from '@/data/news';
@@ -21,7 +22,16 @@ export default async function CategoryPage({ params }: { params: { slug: Categor
 
   return (
     <div className="container-premium space-y-8 py-10">
-      <h1 className="font-display text-5xl">{categoryLabels[params.slug]}</h1>
+      <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+        <h1 className="font-display text-5xl">{categoryLabels[params.slug]}</h1>
+        <Link
+          href={'/comite/' + params.slug}
+          className="inline-flex items-center justify-center border border-gold px-5 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-gold transition hover:bg-gold hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+        >
+          Saiba mais
+        </Link>
+      </div>
+
       {categoryArticles.length === 0 ? (
         <div className="card-border p-8 text-zinc-400">Nenhuma notícia disponível nesta categoria no momento.</div>
       ) : (
