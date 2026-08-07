@@ -12,7 +12,7 @@ export default async function HomePage() {
     <div className="container-premium space-y-14 py-10">
       <section className="space-y-6">
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Edição Principal</p>
-        <h1 className="font-display max-w-4xl text-4xl leading-tight md:text-6xl">Cobertura premium do SIS — Simulado Interno Sidarta</h1>
+        <h1 className="font-display max-w-4xl text-4xl leading-tight md:text-6xl">Cobertura do SIS</h1>
       </section>
 
       {featured.length > 0 && (
