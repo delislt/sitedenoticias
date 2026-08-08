@@ -30,9 +30,13 @@ export default async function ArticlePage({
   return (
     <article className="container-premium py-10">
       <div className="mx-auto max-w-4xl space-y-6">
-        <BackButton />
+        <div className="pb-2">
+          <BackButton />
+        </div>
 
-        <CategoryBadge category={article.category} />
+        <div>
+          <CategoryBadge category={article.category} />
+        </div>
         <h1 className="font-display text-4xl leading-tight md:text-5xl">{article.title}</h1>
         <p className="text-xl text-zinc-300">{article.subtitle}</p>
         <div className="text-sm uppercase tracking-[0.14em] text-zinc-500">
