@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BackButton } from '@/components/BackButton';
@@ -41,16 +40,17 @@ export default async function ArticlePage({
         </div>
 
         {article.coverImage && (
-          <div className="relative aspect-video w-full overflow-hidden border border-zinc-800">
-            <Image
+          <figure className="w-full overflow-hidden border border-zinc-800 bg-coal">
+            {/* A imagem interna preserva suas dimensões naturais; o recorte 16:9 fica apenas nos cards. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={article.coverImage}
               alt={article.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 896px"
-              priority
-              className="object-cover"
+              loading="eager"
+              decoding="async"
+              className="h-auto w-full"
             />
-          </div>
+          </figure>
         )}
 
         <div className="space-y-6 text-justify text-lg leading-relaxed text-zinc-200">
