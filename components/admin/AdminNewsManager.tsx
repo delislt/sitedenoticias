@@ -290,7 +290,7 @@ export function AdminNewsManager() {
                 {editBuffer.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={editBuffer.coverImage} alt="Preview da capa"
-                    className="w-full rounded border border-zinc-700" style={{ aspectRatio: '16/9', objectFit: 'contain', background: '#18181b' }} />
+                    className="aspect-video w-full rounded border border-zinc-700 bg-velvet object-contain" />
                 ) : (
                   <div className="h-20 w-full rounded border border-dashed border-zinc-700 flex items-center justify-center">
                     <span className="text-xs text-zinc-600">Sem imagem</span>
