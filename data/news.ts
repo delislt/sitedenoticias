@@ -20,6 +20,8 @@ export const categoryLabels: Record<Category, string> = {
   historico: 'Histórico'
 };
 
+export const committeeOrder: Category[] = ['juridico', 'csnu', 'historico'];
+
 export const articles: Article[] = [];
 
 export const getFeaturedArticles = () => articles.filter((article) => article.featured);
