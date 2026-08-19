@@ -1,6 +1,7 @@
 import { ArticleCard } from '@/components/ArticleCard';
+import Image from 'next/image';
 import Link from 'next/link';
-import { committeeOrder, categoryLabels } from '@/data/news';
+import { dossiers } from '@/data/dossiers';
 import { fetchAllArticles } from '@/lib/supabase-articles';
 
 export const revalidate = 0;
@@ -17,7 +18,7 @@ export default async function HomePage() {
         <h1 className="font-display max-w-4xl text-4xl leading-tight md:text-6xl">Cobertura do SIS</h1>
       </section>
 
-      <section id="dossies" className="relative scroll-mt-24 overflow-hidden border border-gold/40 bg-coal p-6 sm:p-8" aria-labelledby="dossiers-title">
+      <section id="dossies" className="dossier-panel relative scroll-mt-24 overflow-hidden p-6 sm:p-8" aria-labelledby="dossiers-title">
         <div aria-hidden="true" className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gold/10 blur-3xl" />
         <div className="relative flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div className="space-y-3">
@@ -29,22 +30,31 @@ export default async function HomePage() {
         </div>
 
         <div className="relative mt-7 grid gap-3 md:grid-cols-3">
-          {committeeOrder.map((slug, index) => {
+          {dossiers.map((dossier, index) => {
             return (
               <Link
-                key={slug}
-                href={'/comite/' + slug}
-                className="group flex min-h-40 flex-col justify-between border border-zinc-700 bg-zinc-900/70 p-5 transition hover:-translate-y-1 hover:border-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                key={dossier.slug}
+                href={'/comite/' + dossier.slug}
+                className="dossier-card group overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               >
-                <span className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-                  {categoryLabels[slug]}
-                  <span className="text-zinc-600">0{index + 1}</span>
-                </span>
-                <span className="mt-6 space-y-3">
-                  <span className="block font-display text-xl leading-snug text-zinc-100">
-                    Dossiê do Comitê {categoryLabels[slug]}
+                <span className="relative block aspect-[16/10] overflow-hidden">
+                  <Image
+                    src={dossier.image}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <span className="absolute inset-x-0 bottom-0 flex items-center justify-between p-4 text-xs font-semibold uppercase tracking-[0.2em] text-white">
+                    {dossier.committee}
+                    <span className="text-white/60">0{index + 1}</span>
                   </span>
-                  <span className="flex items-center justify-between text-sm font-semibold text-zinc-300">
+                </span>
+                <span className="flex min-h-56 flex-col p-5">
+                  <span className="block font-display text-2xl leading-snug text-zinc-100">{dossier.title}</span>
+                  <span className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-400">{dossier.summary}</span>
+                  <span className="mt-auto flex items-center justify-between pt-6 text-sm font-semibold text-zinc-300">
                     Acessar dossiê
                     <span aria-hidden="true" className="text-lg text-gold transition group-hover:translate-x-1">→</span>
                   </span>

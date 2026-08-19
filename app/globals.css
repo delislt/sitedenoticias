@@ -23,6 +23,10 @@
   --site-border: #27272a;
   --site-control: #18181b;
   --site-control-hover: #27272a;
+  --dossier-panel: #111111;
+  --dossier-card: #18181b;
+  --dossier-card-hover: #202023;
+  --dossier-shadow: rgba(0, 0, 0, 0.28);
 }
 
 @media (prefers-color-scheme: light) {
@@ -37,6 +41,10 @@
     --site-border: #d4d4d8;
     --site-control: #ffffff;
     --site-control-hover: #e4e4e7;
+    --dossier-panel: #f3efe8;
+    --dossier-card: #ffffff;
+    --dossier-card-hover: #fffcf7;
+    --dossier-shadow: rgba(72, 52, 29, 0.12);
   }
 }
 
@@ -55,6 +63,10 @@
   --site-border: #d4d4d8;
   --site-control: #ffffff;
   --site-control-hover: #e4e4e7;
+  --dossier-panel: #f3efe8;
+  --dossier-card: #ffffff;
+  --dossier-card-hover: #fffcf7;
+  --dossier-shadow: rgba(72, 52, 29, 0.12);
 }
 
 body {
@@ -77,6 +89,34 @@ body {
   border-color: var(--site-border);
   background-color: var(--site-card);
   transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.dossier-panel {
+  border: 1px solid var(--site-border);
+  background-color: var(--dossier-panel);
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.dossier-card,
+.dossier-source,
+.dossier-chip {
+  border: 1px solid var(--site-border);
+  background-color: var(--dossier-card);
+  box-shadow: 0 14px 36px var(--dossier-shadow);
+  transition: transform 200ms ease, background-color 180ms ease, border-color 180ms ease,
+    box-shadow 200ms ease;
+}
+
+.dossier-card:hover,
+.dossier-source:hover,
+.dossier-chip:hover {
+  border-color: #b08d57;
+  background-color: var(--dossier-card-hover);
+}
+
+.dossier-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px var(--dossier-shadow);
 }
 
 .site-header {

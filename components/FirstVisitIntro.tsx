@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { committeeOrder, categoryLabels } from '@/data/news';
+import { dossiers } from '@/data/dossiers';
 
 const STORAGE_KEY = 'sis-introduction-seen-v1';
 
@@ -79,16 +80,26 @@ export function FirstVisitIntro() {
           </div>
 
           <div className="relative mt-9 grid gap-3 md:grid-cols-3">
-            {committeeOrder.map((slug, index) => (
+            {dossiers.map((dossier, index) => (
               <Link
-                key={slug}
-                href={'/comite/' + slug}
+                key={dossier.slug}
+                href={'/comite/' + dossier.slug}
                 onClick={dismiss}
-                className="group flex min-h-36 flex-col justify-between border border-zinc-700 bg-zinc-900/80 p-5 transition hover:-translate-y-1 hover:border-gold hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                className="dossier-card group overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               >
-                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">Dossiê 0{index + 1}</span>
-                <span className="mt-6 flex items-end justify-between gap-4">
-                  <span className="font-display text-2xl text-zinc-100">{categoryLabels[slug]}</span>
+                <span className="relative block aspect-[16/8] overflow-hidden md:aspect-[16/9]">
+                  <Image
+                    src={dossier.image}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <span className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-[0.2em] text-white">Dossiê 0{index + 1}</span>
+                </span>
+                <span className="flex items-end justify-between gap-4 p-4">
+                  <span className="font-display text-xl text-zinc-100">{dossier.committee}</span>
                   <span aria-hidden="true" className="text-xl text-gold transition group-hover:translate-x-1">→</span>
                 </span>
               </Link>
