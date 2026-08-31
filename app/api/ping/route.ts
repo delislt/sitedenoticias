@@ -1,11 +1,45 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const responseHeaders = {
+  'Cache-Control': 'no-store, max-age=0',
+};
+
+export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET;
+  const authorization = request.headers.get('authorization');
+
+  if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
+    return NextResponse.json(
+      { ok: false, error: 'Unauthorized' },
+      { status: 401, headers: responseHeaders }
+    );
+  }
+
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase keep-alive is missing required environment variables.');
+      return NextResponse.json(
+        { ok: false, error: 'Server misconfigured' },
+        { status: 500, headers: responseHeaders }
+      );
+    }
+
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+      supabaseUrl,
+      supabaseKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
 
     const { error } = await supabase
@@ -14,12 +48,25 @@ export async function GET() {
       .limit(1);
 
     if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      console.error('Supabase keep-alive query failed.', {
+        code: error.code,
+        message: error.message,
+      });
+      return NextResponse.json(
+        { ok: false, error: 'Database query failed' },
+        { status: 502, headers: responseHeaders }
+      );
     }
 
-    return NextResponse.json({ ok: true, timestamp: new Date().toISOString() });
+    return NextResponse.json(
+      { ok: true, timestamp: new Date().toISOString() },
+      { headers: responseHeaders }
+    );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido';
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    console.error('Unexpected Supabase keep-alive error.', err);
+    return NextResponse.json(
+      { ok: false, error: 'Unexpected server error' },
+      { status: 500, headers: responseHeaders }
+    );
   }
 }
