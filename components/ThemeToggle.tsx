@@ -35,7 +35,7 @@ export function ThemeToggle() {
     const initialTheme = isTheme(currentTheme) ? currentTheme : getStoredTheme() ?? getSystemTheme();
 
     applyTheme(initialTheme);
-    setTheme(initialTheme);
+    const frame = window.requestAnimationFrame(() => setTheme(initialTheme));
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleSystemChange = (event: MediaQueryListEvent) => {
@@ -47,7 +47,10 @@ export function ThemeToggle() {
     };
 
     mediaQuery.addEventListener('change', handleSystemChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemChange);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      mediaQuery.removeEventListener('change', handleSystemChange);
+    };
   }, []);
 
   function toggleTheme() {

@@ -9,16 +9,26 @@ export function generateStaticParams() {
   return dossiers.map((dossier) => ({ slug: dossier.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: Category } }): Metadata {
-  const dossier = getDossierBySlug(params.slug);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: Category }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const dossier = getDossierBySlug(slug);
 
   return dossier
     ? { title: `${dossier.title} | SIS Jornal`, description: dossier.summary }
     : {};
 }
 
-export default function CommitteePage({ params }: { params: { slug: Category } }) {
-  const dossier = getDossierBySlug(params.slug);
+export default async function CommitteePage({
+  params,
+}: {
+  params: Promise<{ slug: Category }>;
+}) {
+  const { slug } = await params;
+  const dossier = getDossierBySlug(slug);
   if (!dossier) notFound();
 
   return (

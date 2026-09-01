@@ -12,11 +12,16 @@ export function FirstVisitIntro() {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    let shouldOpen = true;
+
     try {
-      setOpen(window.localStorage.getItem(STORAGE_KEY) !== 'true');
+      shouldOpen = window.localStorage.getItem(STORAGE_KEY) !== 'true';
     } catch {
-      setOpen(true);
+      // A apresentação deve aparecer quando o armazenamento está indisponível.
     }
+
+    const frame = window.requestAnimationFrame(() => setOpen(shouldOpen));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
