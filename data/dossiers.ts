@@ -28,9 +28,9 @@ export const dossiers: Dossier[] = [
     title: 'Dossiê - Oppenheimer',
     subtitle: 'O que você precisa saber',
     summary:
-      'O julgamento que expôs o conflito entre ciência, política, segurança nacional e o medo ideológico durante a Guerra Fria.',
-    image: '/images/dossiers/oppenheimer.jpg',
-    imageAlt: 'Ruínas de Hiroshima após o lançamento da bomba atômica',
+      'O julgamento de J. Robert Oppenheimer ocorreu em 1954, durante a Guerra Fria e o Macarthismo. Após liderar o Projeto Manhattan, ele passou a defender o controle de armas nucleares, o que gerou desconfiança.',
+    image: 'https://akkmhfdpqlikbgajwlle.supabase.co/storage/v1/object/public/article-images/cover-1787136413601.jpg',
+    imageAlt: 'Capa do dossiê sobre J. Robert Oppenheimer',
     authors: 'Theo Abud, Joaquim Dias, Arthur Fidelis, Arthur Coelho',
     publishedAt: '12/08/2026, 08:27',
     readingTime: '5 min',
@@ -42,6 +42,7 @@ export const dossiers: Dossier[] = [
       'O julgamento de segurança ocorreu em 1954 diante da Comissão de Energia Atômica dos EUA para avaliar sua lealdade e confiabilidade política. O processo concentrou-se em suas antigas associações com membros do Partido Comunista e em sua oposição ao desenvolvimento da bomba de hidrogênio. Diversos relatos apontam que a audiência apresentou procedimentos abusivos e tratamento desigual das evidências.',
       'Em 1954, J. Robert Oppenheimer perdeu sua autorização de segurança após ser considerado um risco pela Comissão de Energia Atômica dos Estados Unidos, o que encerrou sua influência política.',
       'Seu julgamento resultou na cassação de sua autorização de segurança e encerrou sua atuação como conselheiro do alto escalão do governo dos EUA. Isso repercutiu no meio científico, levantando debates sobre política, moralidade e o papel dos cientistas no Estado. A divulgação dos documentos reforçou a percepção de que Oppenheimer foi prejudicado por um processo injusto e macarthista.',
+      'Na Simulação Interna Sidarta 2026, o Comitê Jurídico julgará se o físico Oppenheimer deve ser responsabilizado pelas mortes causadas pela bomba atômica.',
     ],
     sources: [
       {
@@ -89,38 +90,53 @@ export const dossiers: Dossier[] = [
   {
     slug: 'csnu',
     committee: 'CSNU',
-    title: 'Dossiê - Conflito entre Estados Unidos e Irã',
-    subtitle: 'O que você precisa saber',
+    title: 'Dossiê - Conflito entre EUA e Irã',
+    subtitle: '',
     summary:
-      'As origens da tensão, a escalada militar de 2026 e os impasses envolvendo o programa nuclear, as sanções e o Estreito de Ormuz.',
-    image: '/images/dossiers/eua-ira.jpeg',
-    imageAlt: 'Bandeira do Irã em meio aos escombros de uma área atingida',
-    publishedAt: 'Atualizado em 19/08/2026',
-    paragraphs: [
       'A tensão entre Irã e Estados Unidos existe há décadas, desde a Revolução Iraniana de 1979, e se intensificou principalmente devido ao programa nuclear iraniano e às sanções impostas por Washington.',
-      'Em 28 de fevereiro de 2026, EUA e Israel iniciaram ataques contra o Irã, dando início a uma guerra direta que também envolveu outros países e grupos da região. Em junho, os dois lados chegaram a um acordo provisório de cessar-fogo, mas ele entrou em colapso poucas semanas depois.',
-      'Atualmente, em agosto de 2026, as negociações estão paralisadas. O principal impasse envolve o programa nuclear iraniano, as sanções americanas e o Estreito de Ormuz, importante rota mundial de petróleo que permanece fechada pelo Irã.',
+    image: 'https://akkmhfdpqlikbgajwlle.supabase.co/storage/v1/object/public/article-images/cover-1787136852506.webp',
+    imageAlt: 'Capa do dossiê sobre o conflito entre Estados Unidos e Irã',
+    authors: 'Ana Tumiatti, Enrico Hermida, Nicole Ayres',
+    publishedAt: '19/08/2026, 08:10',
+    readingTime: '1 min',
+    paragraphs: [
+      'A tensão entre Irã e Estados Unidos existe há décadas, desde a Revolução Iraniana de 1979, e se intensificou principalmente devido ao programa nuclear iraniano e às sanções impostas por Washington. Em 28 de fevereiro de 2026, EUA e Israel iniciaram ataques contra o Irã, dando início a uma guerra direta que também envolveu outros países e grupos da região. Em junho, os dois lados chegaram a um acordo provisório de cessar-fogo, mas ele entrou em colapso poucas semanas depois. Atualmente, em agosto de 2026, as negociações estão paralisadas: o principal impasse envolve o programa nuclear iraniano, as sanções americanas e o Estreito de Ormuz, importante rota mundial de petróleo que permanece fechada pelo Irã.',
     ],
     sources: [
       {
-        title: 'Trump says no talks planned with Iran, Tehran says Strait of Hormuz still shut',
-        publisher: 'Reuters',
-        href: 'https://www.reuters.com/world/middle-east/trump-says-no-talks-planned-with-iran-tehran-says-strait-hormuz-still-shut-2026-08-18/',
+        title: 'Como EUA e Irã viraram inimigos mortais: a linha do tempo da relação',
+        publisher: 'BBC News Brasil',
+        href: 'https://www.bbc.com/portuguese/articles/c89kdgdkpego',
       },
       {
-        title: 'A timeline of the Iran conflict and talks aimed at ending it',
-        publisher: 'Associated Press',
-        href: 'https://apnews.com/article/iran-us-timeline-trump-hormuz-war-ceasefire-04da58cbae991183f8b52ef5bf615963',
+        title: 'Análise: os ganhadores e os perdedores da guerra entre EUA e Irã',
+        publisher: 'CNN Brasil',
+        href: 'https://www.cnnbrasil.com.br/internacional/analise-os-ganhadores-e-os-perdedores-da-guerra-entre-eua-e-ira/',
       },
       {
-        title: 'Iran and U.S. reach an initial deal to extend the ceasefire and open the Strait of Hormuz',
-        publisher: 'PBS NewsHour',
-        href: 'https://www.pbs.org/newshour/world/iran-and-u-s-reach-an-initial-deal-to-extend-the-ceasefire-and-open-the-strait-of-hormuz-but-challenges-remain',
+        title: 'EUA x Irã: negociações de paz enfrentam novos obstáculos',
+        publisher: 'CNN Brasil',
+        href: 'https://www.cnnbrasil.com.br/internacional/eua-x-ira-negociacoes-de-paz-enfrentam-novos-obstaculos-entenda/',
       },
       {
-        title: 'Iran, US make competing claims over control of Strait of Hormuz',
-        publisher: 'Reuters',
-        href: 'https://www.reuters.com/world/iran-says-strait-hormuz-is-under-its-control-fars-news-reports-2026-08-13/',
+        title: 'Proposta iraniana para acordo com EUA é dividida em três fases',
+        publisher: 'CBN',
+        href: 'https://cbn.globo.com/mundo/noticia/2026/04/28/proposta-iraniana-para-acordo-com-eua-e-dividida-em-tres-fases-sendo-fim-da-guerra-a-primeira-diz-jornal.ghtml',
+      },
+      {
+        title: 'Referência indicada no dossiê',
+        publisher: 'BBC News Brasil',
+        href: 'https://www.bbc.com/portuguese/articles/cly80nd921zo',
+      },
+      {
+        title: 'Vídeo indicado no dossiê',
+        publisher: 'YouTube',
+        href: 'https://www.youtube.com/watch?v=bx7aSu3nePg',
+      },
+      {
+        title: 'Hegseth diz que Trump não precisa da aprovação do Congresso para guerra',
+        publisher: 'CNN Brasil',
+        href: 'https://www.cnnbrasil.com.br/internacional/hegseth-diz-que-trump-nao-precisa-da-aprovacao-do-congresso-para-guerra/',
       },
     ],
   },
@@ -130,14 +146,16 @@ export const dossiers: Dossier[] = [
     title: 'Dossiê - Guerra da Coreia',
     subtitle: 'O que você precisa saber',
     summary:
-      'As origens do conflito, a divisão da península e o armistício que encerrou os combates sem estabelecer uma paz definitiva.',
-    image: '/images/dossiers/guerra-da-coreia.jpg',
-    imageAlt: 'Soldados durante a Guerra da Coreia',
+      'A Guerra da Coreia aconteceu entre 1950 e 1953 e foi um dos principais conflitos da Guerra Fria. Após a Segunda Guerra Mundial, a Coreia foi dividida em duas partes.',
+    image: 'https://akkmhfdpqlikbgajwlle.supabase.co/storage/v1/object/public/article-images/cover-1787138563817.png',
+    imageAlt: 'Capa do dossiê sobre a Guerra da Coreia',
     authors: 'Francisco Telles, Martin Franco e Taís Pessoa',
     publishedAt: '12/08/2026, 08:21',
     readingTime: '1 min',
     paragraphs: [
       'A Guerra da Coreia aconteceu entre 1950 e 1953 e foi um dos principais conflitos da Guerra Fria. Após a Segunda Guerra Mundial, a Coreia foi dividida em duas partes: a Coreia do Norte, de orientação comunista e apoiada pela União Soviética e, posteriormente, pela China, e a Coreia do Sul, capitalista e apoiada principalmente pelos Estados Unidos e pela ONU. Em 1950, a Coreia do Norte invadiu a Coreia do Sul, dando início à guerra. Durante o conflito, os dois lados avançaram e recuaram diversas vezes, causando milhões de mortes e grande destruição. Em 1953, foi assinado um armistício, encerrando os combates, mas sem estabelecer um tratado de paz definitivo. A fronteira entre os países ficou próxima ao paralelo 38, criando a Zona Desmilitarizada (DMZ). Assim, a guerra terminou sem um vencedor, e a Coreia permaneceu dividida em dois países com sistemas políticos e econômicos opostos, situação que continua até os dias atuais.',
+      'Na Simulação Interna Sidarta 2026, o Comitê Histórico vai discutir o armistício, os crimes de guerra cometidos por cada país, a situação dos reféns e refugiados e a divisão geográfica dos países.',
+      'Acompanhe os desdobramentos das discussões nesta cobertura.',
     ],
     sources: [
       {
