@@ -11,7 +11,7 @@ export const createClient = (request: NextRequest) => {
     },
   });
 
-  const supabase = createServerClient(
+  createServerClient(
     supabaseUrl!,
     supabaseKey!,
     {

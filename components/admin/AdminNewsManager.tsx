@@ -5,7 +5,6 @@ import { categoryLabels } from '@/data/news';
 import {
   categories,
   emptyArticle,
-  parseArticleBody,
   stringifyArticleBody,
   type EditableArticle
 } from '@/lib/admin-news';
@@ -44,7 +43,28 @@ export function AdminNewsManager() {
     }
   }, []);
 
-  useEffect(() => { loadArticles(); }, [loadArticles]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInitialArticles() {
+      try {
+        const articles = await fetchAllArticles();
+        if (!cancelled) setNews(articles);
+      } catch {
+        if (!cancelled) {
+          setMessage('Erro ao carregar notícias.');
+          setIsError(true);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadInitialArticles();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function showMsg(msg: string, error = false) {
     setMessage(msg);

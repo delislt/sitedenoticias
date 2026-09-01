@@ -13,12 +13,9 @@ const navItems = [
 ];
 
 export function Header() {
-  const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  const [menuState, setMenuState] = useState({ pathname: '', open: false });
+  const open = menuState.pathname === pathname && menuState.open;
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -57,7 +54,7 @@ export function Header() {
             <button
               type="button"
               className="menu-toggle flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full md:hidden"
-              onClick={() => setOpen((current) => !current)}
+              onClick={() => setMenuState({ pathname, open: !open })}
               aria-label={open ? 'Fechar menu' : 'Abrir menu'}
               aria-expanded={open}
               aria-controls="mobile-navigation"
