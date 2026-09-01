@@ -45,7 +45,9 @@ export default async function CommitteePage({
         <header className="mx-auto max-w-4xl space-y-5 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">Comitê {dossier.committee}</p>
           <h1 className="font-display text-4xl leading-tight md:text-6xl">{dossier.title}</h1>
-          <p className="text-lg text-zinc-400 md:text-xl">{dossier.subtitle}</p>
+          {dossier.subtitle ? (
+            <p className="text-lg text-zinc-400 md:text-xl">{dossier.subtitle}</p>
+          ) : null}
           {dossier.authors || dossier.publishedAt || dossier.readingTime ? (
             <p className="text-xs uppercase leading-relaxed tracking-[0.12em] text-zinc-500">
               {[dossier.authors, dossier.publishedAt, dossier.readingTime ? `${dossier.readingTime} de leitura` : null]
@@ -84,7 +86,8 @@ export default async function CommitteePage({
                   key={source.href}
                   href={source.href}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
+                  referrerPolicy="no-referrer"
                   className="dossier-source group flex min-h-28 items-center justify-between gap-5 p-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
                 >
                   <span>
