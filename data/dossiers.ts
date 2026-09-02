@@ -29,7 +29,7 @@ export const dossiers: Dossier[] = [
     subtitle: 'O que você precisa saber',
     summary:
       'O julgamento de J. Robert Oppenheimer ocorreu em 1954, durante a Guerra Fria e o Macarthismo. Após liderar o Projeto Manhattan, ele passou a defender o controle de armas nucleares, o que gerou desconfiança.',
-    image: 'https://akkmhfdpqlikbgajwlle.supabase.co/storage/v1/object/public/article-images/cover-1787136413601.jpg',
+    image: '/images/dossiers/oppenheimer.jpg',
     imageAlt: 'Capa do dossiê sobre J. Robert Oppenheimer',
     authors: 'Theo Abud, Joaquim Dias, Arthur Fidelis, Arthur Coelho',
     publishedAt: '12/08/2026, 08:27',
@@ -94,7 +94,7 @@ export const dossiers: Dossier[] = [
     subtitle: '',
     summary:
       'A tensão entre Irã e Estados Unidos existe há décadas, desde a Revolução Iraniana de 1979, e se intensificou principalmente devido ao programa nuclear iraniano e às sanções impostas por Washington.',
-    image: 'https://akkmhfdpqlikbgajwlle.supabase.co/storage/v1/object/public/article-images/cover-1787136852506.webp',
+    image: '/images/dossiers/eua-ira.jpeg',
     imageAlt: 'Capa do dossiê sobre o conflito entre Estados Unidos e Irã',
     authors: 'Ana Tumiatti, Enrico Hermida, Nicole Ayres',
     publishedAt: '19/08/2026, 08:10',
@@ -147,7 +147,7 @@ export const dossiers: Dossier[] = [
     subtitle: 'O que você precisa saber',
     summary:
       'A Guerra da Coreia aconteceu entre 1950 e 1953 e foi um dos principais conflitos da Guerra Fria. Após a Segunda Guerra Mundial, a Coreia foi dividida em duas partes.',
-    image: 'https://akkmhfdpqlikbgajwlle.supabase.co/storage/v1/object/public/article-images/cover-1787138563817.png',
+    image: '/images/dossiers/guerra-da-coreia.jpg',
     imageAlt: 'Capa do dossiê sobre a Guerra da Coreia',
     authors: 'Francisco Telles, Martin Franco e Taís Pessoa',
     publishedAt: '12/08/2026, 08:21',

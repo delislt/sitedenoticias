@@ -1,65 +1,66 @@
-import type { Article, Category } from '@/data/news';
+import { dossiers } from '@/data/dossiers';
+import type { Category } from '@/data/news';
 
-const TEAM_ARTICLE_PATTERN = /equipe|imprensa|jornalismo/i;
-
-const NAME_SEGMENT_PATTERNS: Record<Category, RegExp[]> = {
-  juridico: [
-    /(?:da\s+)?esquerda\s+(?:para|pra)\s+(?:a\s+)?direita\)?\s*:\s*(.+?)\s+será\s+responsável/i,
-  ],
-  csnu: [
-    /equipe,?\s+formada\s+por\s+(.+?),?\s+tem\s+como\s+objetivo/i,
-  ],
-  historico: [
-    /(?:da\s+)?esquerda\s+(?:para|pra)\s+(?:a\s+)?direita\s*:\s*(.+?)\)/i,
-  ],
+type CoverageTeamMedia = {
+  image: string;
+  imageAlt: string;
+  width: number;
+  height: number;
 };
 
-function splitNames(value: string): string[] {
+export type CoverageTeam = CoverageTeamMedia & {
+  category: Category;
+  committee: string;
+  members: string[];
+};
+
+const teamMedia: Record<Category, CoverageTeamMedia> = {
+  juridico: {
+    image: '/images/equipes/equipe-juridico-2026.png',
+    imageAlt: 'Equipe responsável pela cobertura do Comitê Jurídico',
+    width: 1268,
+    height: 1240,
+  },
+  csnu: {
+    image: '/images/equipes/equipe-csnu-2026.jpeg',
+    imageAlt: 'Equipe responsável pela cobertura do CSNU',
+    width: 4032,
+    height: 3024,
+  },
+  historico: {
+    image: '/images/equipes/equipe-historico-2026.jpeg',
+    imageAlt: 'Equipe responsável pela cobertura do Comitê Histórico',
+    width: 4032,
+    height: 3024,
+  },
+};
+
+function splitContributors(value: string): string[] {
   return value
-    .replace(/\s+/g, ' ')
-    .trim()
     .split(/\s*(?:,|\be\b)\s*/i)
     .map((name) => name.trim())
-    .filter((name) => name.split(/\s+/).length >= 2);
+    .filter(Boolean);
 }
 
-export function getCoverageArticle(
-  articles: Article[],
-  category: Category,
-): Article | null {
-  return (
-    articles.find(
-      (article) =>
-        article.category === category &&
-        TEAM_ARTICLE_PATTERN.test(`${article.title} ${article.subtitle}`),
-    ) ?? null
-  );
+export const coverageTeams: CoverageTeam[] = dossiers.map((dossier) => ({
+  category: dossier.slug,
+  committee: dossier.committee,
+  members: splitContributors(dossier.authors ?? ''),
+  ...teamMedia[dossier.slug],
+}));
+
+export function getCoverageTeam(category: Category): CoverageTeam {
+  return coverageTeams.find((team) => team.category === category)!;
 }
 
-export function getCoverageTeamMembers(article: Article): string[] {
-  const content = article.content.join(' ');
-
-  for (const pattern of NAME_SEGMENT_PATTERNS[article.category]) {
-    const match = content.match(pattern);
-    if (match?.[1]) return splitNames(match[1]);
-  }
-
-  return splitNames(article.author);
-}
-
-export function getConsolidatedTeamMembers(articles: Article[]): string[] {
+export function getConsolidatedTeamMembers(): string[] {
   const uniqueNames = new Map<string, string>();
 
-  (['juridico', 'csnu', 'historico'] satisfies Category[]).forEach(
-    (category) => {
-      const article = getCoverageArticle(articles, category);
-      if (!article) return;
-
-      getCoverageTeamMembers(article).forEach((name) => {
-        uniqueNames.set(name.toLocaleLowerCase('pt-BR'), name);
-      });
-    },
-  );
+  coverageTeams.forEach((team) => {
+    team.members.forEach((name) => {
+      uniqueNames.set(name.toLocaleLowerCase('pt-BR'), name);
+    });
+  });
 
   return Array.from(uniqueNames.values());
 }

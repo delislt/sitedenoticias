@@ -2,11 +2,9 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { dossiers } from '@/data/dossiers';
-import { fetchAllArticles } from '@/lib/supabase-articles';
 import {
   getConsolidatedTeamMembers,
-  getCoverageArticle,
-  getCoverageTeamMembers,
+  getCoverageTeam,
 } from '@/lib/project-context';
 
 export const metadata: Metadata = {
@@ -15,8 +13,6 @@ export const metadata: Metadata = {
     'Conheça o Simulado Interno Sidarta, os três comitês, seus dossiês e as equipes responsáveis pela cobertura.',
 };
 
-export const revalidate = 0;
-
 const contextualLinks = [
   { href: '#como-funciona', label: 'Como funciona' },
   { href: '#comites', label: 'Comitês e equipes' },
@@ -24,9 +20,8 @@ const contextualLinks = [
   { href: '#imprensa', label: 'Equipe de imprensa' },
 ];
 
-export default async function AboutPage() {
-  const articles = await fetchAllArticles();
-  const teamMembers = getConsolidatedTeamMembers(articles);
+export default function AboutPage() {
+  const teamMembers = getConsolidatedTeamMembers();
 
   return (
     <div className="container-premium py-10 sm:py-14">
@@ -106,16 +101,13 @@ export default async function AboutPage() {
             Comitês e equipes responsáveis
           </h2>
           <p className="mt-4 leading-relaxed text-zinc-400">
-            Cada equipe acompanha um comitê específico. Os nomes e as fotografias abaixo vêm das apresentações publicadas no Jornal SIS.
+            Cada equipe acompanha um comitê específico. Veja abaixo quem é responsável por cada frente de cobertura.
           </p>
         </div>
 
         <div className="mt-9 space-y-8">
           {dossiers.map((dossier, index) => {
-            const teamArticle = getCoverageArticle(articles, dossier.slug);
-            const members = teamArticle
-              ? getCoverageTeamMembers(teamArticle)
-              : [];
+            const team = getCoverageTeam(dossier.slug);
 
             return (
               <article
@@ -124,17 +116,16 @@ export default async function AboutPage() {
                 className="scroll-mt-28 border-t border-zinc-800 pt-8 first:border-t-0 first:pt-0"
               >
                 <div className="grid gap-7 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-start">
-                  {teamArticle?.coverImage ? (
-                    <figure className="relative aspect-[4/3] overflow-hidden border border-zinc-800 bg-coal">
-                      <Image
-                        src={teamArticle.coverImage}
-                        alt={`Equipe responsável pela cobertura do Comitê ${dossier.committee}`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 440px"
-                        className="object-contain"
-                      />
-                    </figure>
-                  ) : null}
+                  <figure className="overflow-hidden border border-zinc-800 bg-coal">
+                    <Image
+                      src={team.image}
+                      alt={team.imageAlt}
+                      width={team.width}
+                      height={team.height}
+                      sizes="(max-width: 768px) 100vw, 440px"
+                      className="h-auto w-full"
+                    />
+                  </figure>
 
                   <div className="space-y-5">
                     <div className="flex items-center justify-between gap-4">
@@ -156,22 +147,16 @@ export default async function AboutPage() {
                       <h4 className="text-sm font-semibold text-zinc-200">
                         Equipe responsável pela cobertura
                       </h4>
-                      {members.length > 0 ? (
-                        <ul className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm text-zinc-400">
-                          {members.map((member, memberIndex) => (
-                            <li key={member}>
-                              {member}
-                              {memberIndex < members.length - 1 ? (
-                                <span aria-hidden="true" className="ml-2 text-gold">•</span>
-                              ) : null}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-2 text-sm text-zinc-500">
-                          A apresentação da equipe ainda não está disponível.
-                        </p>
-                      )}
+                      <ul className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm text-zinc-400">
+                        {team.members.map((member, memberIndex) => (
+                          <li key={member}>
+                            {member}
+                            {memberIndex < team.members.length - 1 ? (
+                              <span aria-hidden="true" className="ml-2 text-gold">•</span>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
 
                     <nav
@@ -190,14 +175,6 @@ export default async function AboutPage() {
                       >
                         Ver dossiê
                       </Link>
-                      {teamArticle ? (
-                        <Link
-                          href={`/artigo/${teamArticle.slug}`}
-                          className="text-zinc-300 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-                        >
-                          Ler apresentação da equipe
-                        </Link>
-                      ) : null}
                     </nav>
                   </div>
                 </div>
@@ -282,22 +259,16 @@ export default async function AboutPage() {
           <div>
             <h3 className="font-display text-2xl text-zinc-100">Integrantes confirmados</h3>
             <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-              Consolidação das três apresentações de equipe publicadas no portal.
+              Consolidação das três equipes responsáveis pela cobertura do portal.
             </p>
           </div>
-          {teamMembers.length > 0 ? (
-            <ul className="grid gap-x-8 gap-y-3 text-sm text-zinc-300 sm:grid-cols-2">
-              {teamMembers.map((member) => (
-                <li key={member} className="border-b border-zinc-800 pb-3">
-                  {member}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-zinc-500">
-              Os nomes ainda não estão disponíveis nas apresentações publicadas.
-            </p>
-          )}
+          <ul className="grid gap-x-8 gap-y-3 text-sm text-zinc-300 sm:grid-cols-2">
+            {teamMembers.map((member) => (
+              <li key={member} className="border-b border-zinc-800 pb-3">
+                {member}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </div>
