@@ -1,9 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { dossiers } from '@/data/dossiers';
 
 const STORAGE_KEY = 'sis-introduction-seen-v1';
 
@@ -80,41 +77,14 @@ export function FirstVisitIntro() {
               Bem-vindo ao Jornal SIS
             </h1>
             <p id="sis-intro-description" className="max-w-2xl text-base leading-relaxed text-zinc-300 sm:text-lg">
-              O SIS é um simulado acadêmico inspirado nas dinâmicas da ONU. Este portal reúne a cobertura dos debates e os dossiês de preparação dos três comitês.
+              O SIS é um simulado acadêmico inspirado nas dinâmicas da ONU. Este portal reúne a cobertura dos debates dos três comitês.
             </p>
-          </div>
-
-          <div className="relative mt-9 grid gap-3 md:grid-cols-3">
-            {dossiers.map((dossier, index) => (
-              <Link
-                key={dossier.slug}
-                href={'/comite/' + dossier.slug}
-                onClick={dismiss}
-                className="dossier-card group overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-              >
-                <span className="relative block aspect-[16/8] overflow-hidden md:aspect-[16/9]">
-                  <Image
-                    src={dossier.image}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                  />
-                  <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <span className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-[0.2em] text-white">Dossiê 0{index + 1}</span>
-                </span>
-                <span className="flex items-end justify-between gap-4 p-4">
-                  <span className="font-display text-xl text-zinc-100">{dossier.committee}</span>
-                  <span aria-hidden="true" className="text-xl text-gold transition group-hover:translate-x-1">→</span>
-                </span>
-              </Link>
-            ))}
           </div>
 
           <button
             type="button"
             onClick={dismiss}
-            className="relative mt-7 text-sm font-semibold text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+            className="relative mt-7 inline-flex min-h-11 items-center border border-gold/50 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-200 transition hover:border-gold hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
           >
             Continuar para a página inicial
           </button>

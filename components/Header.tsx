@@ -9,6 +9,7 @@ const navItems = [
   { href: '/categoria/juridico', label: 'Jurídico' },
   { href: '/categoria/csnu', label: 'CSNU' },
   { href: '/categoria/historico', label: 'Histórico' },
+  { href: '/dossies', label: 'Dossiês' },
   { href: '/sobre', label: 'Sobre o SIS' },
 ];
 
@@ -37,7 +38,7 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <nav aria-label="Navegação principal" className="hidden items-center gap-5 md:flex">
+            <nav aria-label="Navegação principal" className="hidden items-center gap-5 lg:flex">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -53,7 +54,7 @@ export function Header() {
 
             <button
               type="button"
-              className="menu-toggle flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full md:hidden"
+              className="menu-toggle flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full lg:hidden"
               onClick={() => setMenuState({ pathname, open: !open })}
               aria-label={open ? 'Fechar menu' : 'Abrir menu'}
               aria-expanded={open}
@@ -70,7 +71,7 @@ export function Header() {
       {open ? (
         <div
           id="mobile-navigation"
-          className="site-mobile-drawer fixed inset-x-0 bottom-0 top-[69px] z-30 flex flex-col md:hidden"
+          className="site-mobile-drawer fixed inset-x-0 bottom-0 top-[69px] z-30 flex flex-col lg:hidden"
         >
           <nav aria-label="Navegação móvel" className="flex flex-col divide-y divide-zinc-800">
             {navItems.map((item) => (

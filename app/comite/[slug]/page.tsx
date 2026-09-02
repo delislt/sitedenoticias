@@ -35,7 +35,7 @@ export default async function CommitteePage({
     <main className="container-premium py-10">
       <article className="mx-auto max-w-5xl space-y-8">
         <Link
-          href="/#dossies"
+          href="/dossies"
           className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-zinc-400 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
         >
           <span aria-hidden="true">←</span>
