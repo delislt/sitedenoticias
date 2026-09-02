@@ -21,7 +21,15 @@ export default function DossiersPage() {
               Acesse o material do seu comitê antes de acompanhar a cobertura do SIS.
             </p>
           </div>
-          <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">3 comitês</span>
+          <div className="flex flex-col items-start gap-2 lg:items-end">
+            <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">3 comitês</span>
+            <Link
+              href="/sobre#comites"
+              className="text-sm font-semibold text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+            >
+              Entenda os comitês
+            </Link>
+          </div>
         </div>
 
         <div className="relative mt-8 grid gap-4 md:grid-cols-3">

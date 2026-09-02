@@ -43,6 +43,30 @@ export default async function ArticlePage({
           {article.author} &middot; <DateDisplay dateStr={article.created_at ?? ''} /> &middot; {article.readingTime} de leitura
         </div>
 
+        <nav
+          aria-label="Contexto desta notícia"
+          className="flex flex-wrap gap-x-5 gap-y-3 border-y border-zinc-800 py-4 text-sm font-semibold"
+        >
+          <Link
+            href={`/categoria/${article.category}`}
+            className="text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+          >
+            Mais notícias do comitê
+          </Link>
+          <Link
+            href={`/sobre#comite-${article.category}`}
+            className="text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+          >
+            Entenda este comitê
+          </Link>
+          <Link
+            href={`/comite/${article.category}`}
+            className="text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+          >
+            Ver dossiê
+          </Link>
+        </nav>
+
         {article.coverImage && (
           <figure className="w-full overflow-hidden border border-zinc-800 bg-coal">
             {/* A imagem interna preserva suas dimensões naturais; o recorte 16:9 fica apenas nos cards. */}

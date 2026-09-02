@@ -10,13 +10,21 @@ const navItems = [
   { href: '/categoria/csnu', label: 'CSNU' },
   { href: '/categoria/historico', label: 'Histórico' },
   { href: '/dossies', label: 'Dossiês' },
-  { href: '/sobre', label: 'Sobre o SIS' },
+  { href: '/sobre', label: 'Entenda o projeto' },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const [menuState, setMenuState] = useState({ pathname: '', open: false });
   const open = menuState.pathname === pathname && menuState.open;
+
+  function isActive(href: string) {
+    if (href === '/dossies') {
+      return pathname === href || pathname.startsWith('/comite/');
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -43,7 +51,10 @@ export function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-sm uppercase tracking-[0.15em] text-zinc-300 transition hover:text-gold"
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                  className={`text-sm uppercase tracking-[0.15em] transition hover:text-gold ${
+                    isActive(item.href) ? 'text-gold' : 'text-zinc-300'
+                  }`}
                 >
                   {item.label}
                 </Link>
@@ -78,7 +89,10 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="site-mobile-link px-6 py-5 text-base uppercase tracking-[0.15em] text-zinc-100 transition hover:text-gold"
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                className={`site-mobile-link px-6 py-5 text-base uppercase tracking-[0.15em] transition hover:text-gold ${
+                  isActive(item.href) ? 'text-gold' : 'text-zinc-100'
+                }`}
               >
                 {item.label}
               </Link>

@@ -24,14 +24,22 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="container-premium space-y-8 py-10">
-      <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
         <h1 className="font-display text-5xl">{categoryLabels[slug]}</h1>
-        <Link
-          href={'/comite/' + slug}
-          className="inline-flex items-center justify-center border border-gold px-5 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-gold transition hover:bg-gold hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-        >
-          Saiba mais
-        </Link>
+        <nav aria-label={`Contexto do Comitê ${categoryLabels[slug]}`} className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold">
+          <Link
+            href={`/sobre#comite-${slug}`}
+            className="text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+          >
+            Entenda este comitê
+          </Link>
+          <Link
+            href={`/comite/${slug}`}
+            className="text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+          >
+            Ver dossiê
+          </Link>
+        </nav>
       </div>
 
       {categoryArticles.length === 0 ? (
