@@ -1,68 +1,62 @@
-# SIS Notícias
+# Jornal SIS — SIS Notícias
 
-> **Premium coverage of SIS — Simulado Interno Sidarta**
+Portal do **Simulado Interno Sidarta**, com cobertura acadêmica dos comitês Jurídico, CSNU e Histórico. Site: [sisnoticias.vercel.app](https://sisnoticias.vercel.app).
 
-SIS Notícias is a **school project** built as a digital news platform for the Simulado Interno Sidarta context. The published site presents itself as a premium-style news portal focused on organized coverage, editorial presentation, and content management.
+A aplicação existente foi ampliada, preservando os dossiês, textos, URLs, logotipo, tipografia, dourado e temas. Acontecimentos da simulação são identificados no conteúdo e no compartilhamento.
 
-## Overview
+## Funcionalidades
 
-This project was designed to simulate a modern online newspaper with a clean editorial interface, category-based navigation, article pages, and an admin area for content publishing. Its public repository structure shows a Next.js application organized with `app`, `components`, `lib`, `utils`, and dedicated routes for `admin`, `categoria`, `artigo`, and `sobre`. 
+- Notícias com rascunho, revisão, publicação e arquivamento; prévia protegida, autoria, fontes, correções, histórico e proteção contra sobrescrita.
+- Funções protegidas de jornalista, editor, moderador e administrador; conta de leitor separada.
+- Comentários verificados, revisão prévia inicial, respostas em um nível, edição por 15 minutos, remoção, denúncias, suspensão e histórico de decisões.
+- Busca em português, filtros compartilháveis, paginação no banco, consulta direta por slug, redirecionamento de endereços antigos e matérias relacionadas.
+- Favoritos locais e sincronização opcional, compartilhamento, tamanho de texto, impressão e metadados por artigo.
+- Agenda com ICS, biblioteca com PDFs públicos ou restritos, cobertura por sessão, avisos, glossário e arquivo por edição.
+- Uploads privados validados no servidor, limites persistentes no banco, CSP, controle de origem e RLS.
 
-## Why this project exists
+**Estado inicial:** cadastro e novos comentários ficam fechados até configurar a operação de moderação. Não foram criadas notícias, sessões ou documentos fictícios no banco hospedado. Veja as dependências reais em [implantação](docs/DEPLOYMENT.md) e o alcance da verificação em [testes](docs/VERIFICATION.md).
 
-The main goal is educational: to build a functional news website as part of a school-oriented experience, combining interface design, structured content, deployment, and backend integration. The live website explicitly references **Simulado Interno Sidarta**, which supports its academic and school-related identity. 
+## Stack confirmada
 
-## Features
+Node.js 24, Next.js **16.3.4**, React/React DOM **19.2.8**, TypeScript **5.5.3**, Tailwind CSS **3.4.7**, Supabase JS **2.112.4**, Supabase SSR **0.10.2**, Postgres/Supabase e Vercel. Versões e dependências estão fixadas em `package.json` e `package-lock.json`.
 
-- Editorial-style homepage with a premium news layout.
-- Category-based browsing, including routes such as `juridico`, `csnu`, and `historico`. 
-- Admin panel for publishing and managing articles. 
-- Image upload flow and Supabase integration in the project structure. 
-- Production deployment hosted on Vercel.
+## Desenvolvimento
 
-## Project structure
-
-```bash
-.
-├── app/
-│   ├── admin/
-│   ├── api/
-│   ├── artigo/
-│   ├── categoria/
-│   ├── sobre/
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-├── lib/
-├── utils/
-└── middleware.ts
-```
-
-This structure reflects a modern Next.js App Router project, with separated routes, UI components, and utility layers. 
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js  |
-| UI | React with `.tsx` components  |
-| Styling | Tailwind CSS  |
-| Backend and database | Supabase  |
-| Deployment | Vercel |
-
-## Local development
-
-```bash
-git clone https://github.com/delislt/sitedenoticias.git
-cd sitedenoticias
-npm install
+```sh
+npm ci
+# Configure .env.local a partir de .env.example
 npm run dev
 ```
 
-The repository includes `package.json`, `package-lock.json`, Next.js configuration files, and environment file examples, indicating a standard local development workflow with Node.js. 
+Use um projeto Supabase de desenvolvimento com o esquema legado e as migrations em ordem. Os testes SQL usam PostgreSQL isolado em PGlite e **não precisam de credenciais ou acesso à produção**.
 
-## Links
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
-- Live site: [sisnoticias.vercel.app](https://sisnoticias.vercel.app)
-- Repository: [github.com/delislt/sitedenoticias](https://github.com/delislt/sitedenoticias) 
+## Organização
+
+| Caminho | Responsabilidade |
+| --- | --- |
+| `app/` | Páginas, metadados e handlers autenticados |
+| `components/` | Interações de leitura, conta, comentários e painel |
+| `lib/` | Domínio, consultas limitadas, autorização e validação |
+| `utils/supabase/` | Clientes público, navegador, sessão e privilegiado separados |
+| `data/dossiers.ts` | Dossiês originais, mantidos estáticos |
+| `supabase/migrations/` | Migrações adicionais ao banco existente |
+| `tests/` | PostgreSQL isolado, autorização, uploads, CSRF e ICS |
+| `docs/` | Arquitetura, operação, implantação, verificação e backlog |
+
+## Documentação
+
+- [Arquitetura e segurança](docs/ARCHITECTURE.md)
+- [Guia editorial e moderação](docs/OPERATIONS.md)
+- [Implantação, variáveis e recuperação](docs/DEPLOYMENT.md)
+- [Evidências e limitações da verificação](docs/VERIFICATION.md)
+- [Backlog P3](docs/BACKLOG.md)
+
+Leia também as páginas públicas de [privacidade](https://sisnoticias.vercel.app/privacidade) e [convivência](https://sisnoticias.vercel.app/convivencia). As decisões institucionais sobre participação escolar precisam ser formalizadas pela organização.
 

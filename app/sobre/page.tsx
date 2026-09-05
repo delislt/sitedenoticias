@@ -1,23 +1,23 @@
-import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
-import { dossiers } from '@/data/dossiers';
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { dossiers } from "@/data/dossiers";
 import {
   getConsolidatedTeamMembers,
   getCoverageTeam,
-} from '@/lib/project-context';
+} from "@/lib/project-context";
 
 export const metadata: Metadata = {
-  title: 'Entenda o projeto | SIS Jornal',
+  title: "Entenda o projeto | SIS Jornal",
   description:
-    'Conheça o Simulado Interno Sidarta, os três comitês, seus dossiês e as equipes responsáveis pela cobertura.',
+    "Conheça o Simulado Interno Sidarta, os três comitês, seus dossiês e as equipes responsáveis pela cobertura.",
 };
 
 const contextualLinks = [
-  { href: '#como-funciona', label: 'Como funciona' },
-  { href: '#comites', label: 'Comitês e equipes' },
-  { href: '#dossies', label: 'Dossiês' },
-  { href: '#imprensa', label: 'Equipe de imprensa' },
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#comites", label: "Comitês e equipes" },
+  { href: "#dossies", label: "Dossiês" },
+  { href: "#imprensa", label: "Equipe de imprensa" },
 ];
 
 export default function AboutPage() {
@@ -33,7 +33,9 @@ export default function AboutPage() {
           Entenda o projeto por trás das notícias
         </h1>
         <p className="mt-5 max-w-3xl text-lg leading-relaxed text-zinc-300 sm:text-xl">
-          O Jornal SIS acompanha uma simulação acadêmica inspirada nas dinâmicas da ONU. Aqui você encontra o contexto dos três comitês, os materiais de preparação e quem produz a cobertura.
+          O Jornal SIS acompanha uma simulação acadêmica inspirada nas dinâmicas
+          da ONU. Aqui você encontra o contexto dos três comitês, os materiais
+          de preparação e quem produz a cobertura.
         </p>
 
         <nav
@@ -61,28 +63,43 @@ export default function AboutPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
             O projeto
           </p>
-          <h2 id="como-funciona-title" className="mt-3 font-display text-3xl text-zinc-100">
+          <h2
+            id="como-funciona-title"
+            className="mt-3 font-display text-3xl text-zinc-100"
+          >
             O contexto por trás do jornal
           </h2>
         </div>
 
         <div className="mt-8 grid gap-7 md:grid-cols-3 md:gap-8">
           <div className="border-t border-zinc-800 pt-5">
-            <h3 className="font-display text-xl text-zinc-100">O que é o projeto</h3>
+            <h3 className="font-display text-xl text-zinc-100">
+              O que é o projeto
+            </h3>
             <p className="mt-3 leading-relaxed text-zinc-300">
-              O SIS é um simulado acadêmico de alto nível desenvolvido para fortalecer competências em diplomacia, negociação, análise geopolítica e argumentação jurídica.
+              O SIS é um simulado acadêmico de alto nível desenvolvido para
+              fortalecer competências em diplomacia, negociação, análise
+              geopolítica e argumentação jurídica.
             </p>
           </div>
           <div className="border-t border-zinc-800 pt-5">
-            <h3 className="font-display text-xl text-zinc-100">Como funciona a simulação</h3>
+            <h3 className="font-display text-xl text-zinc-100">
+              Como funciona a simulação
+            </h3>
             <p className="mt-3 leading-relaxed text-zinc-300">
-              Em 2026, o portal acompanha os comitês Jurídico, CSNU e Histórico. Cada um trabalha com um tema próprio e possui um dossiê para orientar a preparação e a leitura dos acontecimentos.
+              Em 2026, o portal acompanha os comitês Jurídico, CSNU e Histórico.
+              Cada um trabalha com um tema próprio e possui um dossiê para
+              orientar a preparação e a leitura dos acontecimentos.
             </p>
           </div>
           <div className="border-t border-zinc-800 pt-5">
-            <h3 className="font-display text-xl text-zinc-100">Como funciona a imprensa</h3>
+            <h3 className="font-display text-xl text-zinc-100">
+              Como funciona a imprensa
+            </h3>
             <p className="mt-3 leading-relaxed text-zinc-300">
-              A imprensa registra debates, resoluções, impasses e avanços dos comitês. As matérias são publicadas como cobertura jornalística dos acontecimentos simulados.
+              A imprensa registra debates, resoluções, impasses e avanços dos
+              comitês. As matérias são publicadas como cobertura jornalística
+              dos acontecimentos simulados.
             </p>
           </div>
         </div>
@@ -97,11 +114,15 @@ export default function AboutPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
             Três frentes de cobertura
           </p>
-          <h2 id="comites-title" className="mt-3 font-display text-4xl text-zinc-100">
+          <h2
+            id="comites-title"
+            className="mt-3 font-display text-4xl text-zinc-100"
+          >
             Comitês e equipes responsáveis
           </h2>
           <p className="mt-4 leading-relaxed text-zinc-400">
-            Cada equipe acompanha um comitê específico. Veja abaixo quem é responsável por cada frente de cobertura.
+            Cada equipe acompanha um comitê específico. Veja abaixo quem é
+            responsável por cada frente de cobertura.
           </p>
         </div>
 
@@ -132,11 +153,13 @@ export default function AboutPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                         Comitê {dossier.committee}
                       </p>
-                      <span className="text-xs text-zinc-600">0{index + 1}</span>
+                      <span className="text-xs text-zinc-600">
+                        0{index + 1}
+                      </span>
                     </div>
                     <div>
                       <h3 className="font-display text-3xl leading-tight text-zinc-100">
-                        {dossier.title.replace('Dossiê - ', '')}
+                        {dossier.title.replace("Dossiê - ", "")}
                       </h3>
                       <p className="mt-3 line-clamp-4 leading-relaxed text-zinc-400">
                         {dossier.summary}
@@ -152,7 +175,12 @@ export default function AboutPage() {
                           <li key={member}>
                             {member}
                             {memberIndex < team.members.length - 1 ? (
-                              <span aria-hidden="true" className="ml-2 text-gold">•</span>
+                              <span
+                                aria-hidden="true"
+                                className="ml-2 text-gold"
+                              >
+                                •
+                              </span>
                             ) : null}
                           </li>
                         ))}
@@ -194,11 +222,15 @@ export default function AboutPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
               Materiais de preparação
             </p>
-            <h2 id="dossies-title" className="mt-3 font-display text-4xl text-zinc-100">
+            <h2
+              id="dossies-title"
+              className="mt-3 font-display text-4xl text-zinc-100"
+            >
               Dossiês
             </h2>
             <p className="mt-4 leading-relaxed text-zinc-400">
-              Cada dossiê reúne o contexto necessário para compreender o tema discutido por seu comitê.
+              Cada dossiê reúne o contexto necessário para compreender o tema
+              discutido por seu comitê.
             </p>
           </div>
           <ol className="divide-y divide-zinc-800 border-y border-zinc-800">
@@ -216,7 +248,12 @@ export default function AboutPage() {
                       {dossier.title}
                     </span>
                   </span>
-                  <span aria-hidden="true" className="text-xl text-gold transition group-hover:translate-x-1">→</span>
+                  <span
+                    aria-hidden="true"
+                    className="text-xl text-gold transition group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
                 </Link>
               </li>
             ))}
@@ -233,11 +270,15 @@ export default function AboutPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
             Quem produz o jornal
           </p>
-          <h2 id="imprensa-title" className="mt-3 font-display text-4xl text-zinc-100">
+          <h2
+            id="imprensa-title"
+            className="mt-3 font-display text-4xl text-zinc-100"
+          >
             Equipe de imprensa
           </h2>
           <p className="mt-4 leading-relaxed text-zinc-400">
-            As três equipes acompanham os acontecimentos de seus comitês e produzem a cobertura publicada neste portal.
+            As três equipes acompanham os acontecimentos de seus comitês e
+            produzem a cobertura publicada neste portal.
           </p>
         </div>
 
@@ -251,15 +292,19 @@ export default function AboutPage() {
             className="h-auto w-full"
           />
           <figcaption className="border-t border-zinc-800 px-4 py-3 text-xs leading-relaxed text-zinc-500 sm:px-5">
-            Equipe de imprensa do Jornal SIS, 2026. A fotografia representa o grupo coletivamente.
+            Equipe de imprensa do Jornal SIS, 2026. A fotografia representa o
+            grupo coletivamente.
           </figcaption>
         </figure>
 
         <div className="mt-8 grid gap-6 border-t border-zinc-800 pt-7 md:grid-cols-[minmax(0,0.55fr)_minmax(0,1.45fr)]">
           <div>
-            <h3 className="font-display text-2xl text-zinc-100">Integrantes confirmados</h3>
+            <h3 className="font-display text-2xl text-zinc-100">
+              Integrantes confirmados
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-              Consolidação das três equipes responsáveis pela cobertura do portal.
+              Consolidação das três equipes responsáveis pela cobertura do
+              portal.
             </p>
           </div>
           <ul className="grid gap-x-8 gap-y-3 text-sm text-zinc-300 sm:grid-cols-2">

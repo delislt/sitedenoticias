@@ -1,0 +1,112 @@
+{
+  "at": "2026-09-05T00:53:49.034Z",
+  "base": "http://127.0.0.1:3000",
+  "method": "1 warmup + 5 sequential GETs per route; full HTML; same local dev server and public database",
+  "pages": [
+    {
+      "path": "/",
+      "samples": [
+        {
+          "status": 200,
+          "headersMs": 687,
+          "totalMs": 688,
+          "bytes": 15486
+        },
+        {
+          "status": 200,
+          "headersMs": 629,
+          "totalMs": 630,
+          "bytes": 15486
+        },
+        {
+          "status": 200,
+          "headersMs": 271,
+          "totalMs": 271,
+          "bytes": 15486
+        },
+        {
+          "status": 200,
+          "headersMs": 262,
+          "totalMs": 263,
+          "bytes": 15486
+        },
+        {
+          "status": 200,
+          "headersMs": 253,
+          "totalMs": 253,
+          "bytes": 15486
+        }
+      ]
+    },
+    {
+      "path": "/categoria/csnu",
+      "samples": [
+        {
+          "status": 200,
+          "headersMs": 258,
+          "totalMs": 259,
+          "bytes": 18125
+        },
+        {
+          "status": 200,
+          "headersMs": 264,
+          "totalMs": 265,
+          "bytes": 18125
+        },
+        {
+          "status": 200,
+          "headersMs": 279,
+          "totalMs": 280,
+          "bytes": 18125
+        },
+        {
+          "status": 200,
+          "headersMs": 249,
+          "totalMs": 250,
+          "bytes": 18125
+        },
+        {
+          "status": 200,
+          "headersMs": 275,
+          "totalMs": 276,
+          "bytes": 18125
+        }
+      ]
+    },
+    {
+      "path": "/dossies",
+      "samples": [
+        {
+          "status": 200,
+          "headersMs": 29,
+          "totalMs": 30,
+          "bytes": 31922
+        },
+        {
+          "status": 200,
+          "headersMs": 43,
+          "totalMs": 45,
+          "bytes": 31922
+        },
+        {
+          "status": 200,
+          "headersMs": 47,
+          "totalMs": 48,
+          "bytes": 31922
+        },
+        {
+          "status": 200,
+          "headersMs": 41,
+          "totalMs": 42,
+          "bytes": 31922
+        },
+        {
+          "status": 200,
+          "headersMs": 44,
+          "totalMs": 45,
+          "bytes": 31922
+        }
+      ]
+    }
+  ]
+}

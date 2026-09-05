@@ -4,3 +4,10 @@ node_modules
 !.env.example
 .vercel
 npm-debug.log*
+
+*.tsbuildinfo
+.eslint-results.json
+.test-output/
+
+supabase/.temp/
+docs/evidence/measurement.json

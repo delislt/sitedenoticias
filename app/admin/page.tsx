@@ -1,27 +1,29 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createClient } from '@/utils/supabase/server';
-import { AdminNewsManager } from '@/components/admin/AdminNewsManager';
-import { LogoutButton } from '@/components/admin/LogoutButton';
-
+import { redirect } from "next/navigation";
+import { currentSession } from "@/lib/auth";
+import { can } from "@/lib/domain";
+import { getEditions } from "@/lib/resources";
+import { AdminNewsManager } from "@/components/admin/AdminNewsManager";
+import { LogoutButton } from "@/components/admin/LogoutButton";
 export default async function AdminPage() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect('/admin/login');
-
+  const { access } = await currentSession();
+  if (!access.user_id) redirect("/admin/login");
+  if (!can(access, "journalist", "editor")) {
+    if (can(access, "moderator")) redirect("/admin/moderacao");
+    redirect("/conta");
+  }
+  const editions = await getEditions();
   return (
-    <div className="container-premium space-y-6 py-10">
-      <div className="flex items-start justify-between">
+    <div className="container-premium space-y-7 py-10">
+      <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-gold">Painel Administrativo</p>
+          <p className="text-xs uppercase tracking-widest text-gold">
+            Painel editorial
+          </p>
           <h1 className="font-display text-4xl">Gestão de notícias do SIS</h1>
-          <p className="mt-2 text-zinc-400">Logado como <span className="text-zinc-200">{user.email}</span></p>
         </div>
         <LogoutButton />
       </div>
-      <AdminNewsManager />
+      <AdminNewsManager access={access} editions={editions} />
     </div>
   );
 }

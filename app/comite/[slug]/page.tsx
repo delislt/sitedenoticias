@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { dossiers, getDossierBySlug } from '@/data/dossiers';
-import type { Category } from '@/data/news';
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { dossiers, getDossierBySlug } from "@/data/dossiers";
+import type { Category } from "@/data/news";
 
 export function generateStaticParams() {
   return dossiers.map((dossier) => ({ slug: dossier.slug }));
@@ -34,7 +34,10 @@ export default async function CommitteePage({
   return (
     <div className="container-premium py-10">
       <article className="mx-auto max-w-5xl space-y-8">
-        <nav aria-label="Contexto do dossiê" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold uppercase tracking-[0.14em]">
+        <nav
+          aria-label="Contexto do dossiê"
+          className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold uppercase tracking-[0.14em]"
+        >
           <Link
             href="/dossies"
             className="inline-flex items-center gap-2 text-zinc-400 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
@@ -57,16 +60,28 @@ export default async function CommitteePage({
         </nav>
 
         <header className="mx-auto max-w-4xl space-y-5 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">Comitê {dossier.committee}</p>
-          <h1 className="font-display text-4xl leading-tight md:text-6xl">{dossier.title}</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+            Comitê {dossier.committee}
+          </p>
+          <h1 className="font-display text-4xl leading-tight md:text-6xl">
+            {dossier.title}
+          </h1>
           {dossier.subtitle ? (
-            <p className="text-lg text-zinc-400 md:text-xl">{dossier.subtitle}</p>
+            <p className="text-lg text-zinc-400 md:text-xl">
+              {dossier.subtitle}
+            </p>
           ) : null}
           {dossier.authors || dossier.publishedAt || dossier.readingTime ? (
             <p className="text-xs uppercase leading-relaxed tracking-[0.12em] text-zinc-500">
-              {[dossier.authors, dossier.publishedAt, dossier.readingTime ? `${dossier.readingTime} de leitura` : null]
+              {[
+                dossier.authors,
+                dossier.publishedAt,
+                dossier.readingTime
+                  ? `${dossier.readingTime} de leitura`
+                  : null,
+              ]
                 .filter(Boolean)
-                .join(' · ')}
+                .join(" · ")}
             </p>
           ) : null}
         </header>
@@ -89,10 +104,20 @@ export default async function CommitteePage({
         </section>
 
         {dossier.sources.length > 0 ? (
-          <section className="mx-auto max-w-4xl border-t border-zinc-800 pt-9" aria-labelledby="sources-title">
+          <section
+            className="mx-auto max-w-4xl border-t border-zinc-800 pt-9"
+            aria-labelledby="sources-title"
+          >
             <div className="mb-6 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">Continue pesquisando</p>
-              <h2 id="sources-title" className="font-display text-3xl text-zinc-100">Saiba mais</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
+                Continue pesquisando
+              </p>
+              <h2
+                id="sources-title"
+                className="font-display text-3xl text-zinc-100"
+              >
+                Saiba mais
+              </h2>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {dossier.sources.map((source) => (
@@ -105,23 +130,35 @@ export default async function CommitteePage({
                   className="dossier-source group flex min-h-28 items-center justify-between gap-5 p-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
                 >
                   <span>
-                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-gold">{source.publisher}</span>
-                    <span className="mt-2 block font-display text-lg leading-snug text-zinc-100">{source.title}</span>
+                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-gold">
+                      {source.publisher}
+                    </span>
+                    <span className="mt-2 block font-display text-lg leading-snug text-zinc-100">
+                      {source.title}
+                    </span>
                   </span>
-                  <span aria-hidden="true" className="shrink-0 text-xl text-gold transition group-hover:-translate-y-1 group-hover:translate-x-1">↗</span>
+                  <span
+                    aria-hidden="true"
+                    className="shrink-0 text-xl text-gold transition group-hover:-translate-y-1 group-hover:translate-x-1"
+                  >
+                    ↗
+                  </span>
                 </a>
               ))}
             </div>
           </section>
         ) : null}
 
-        <nav className="mx-auto flex max-w-4xl flex-wrap gap-3 border-t border-zinc-800 pt-8" aria-label="Outros dossiês">
+        <nav
+          className="mx-auto flex max-w-4xl flex-wrap gap-3 border-t border-zinc-800 pt-8"
+          aria-label="Outros dossiês"
+        >
           {dossiers
             .filter((item) => item.slug !== dossier.slug)
             .map((item) => (
               <Link
                 key={item.slug}
-                href={'/comite/' + item.slug}
+                href={"/comite/" + item.slug}
                 className="dossier-chip inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300 transition hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               >
                 Dossiê {item.committee}

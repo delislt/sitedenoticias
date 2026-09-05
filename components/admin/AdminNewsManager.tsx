@@ -1,357 +1,550 @@
-'use client';
-
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { categoryLabels } from '@/data/news';
-import {
-  categories,
-  emptyArticle,
-  stringifyArticleBody,
-  type EditableArticle
-} from '@/lib/admin-news';
-import {
-  fetchAllArticles,
-  createArticle,
-  updateArticle,
-  deleteArticle,
-  uploadCoverImage,
-} from '@/lib/supabase-articles';
-
-type Mode = 'idle' | 'creating' | 'editing';
-
-export function AdminNewsManager() {
-  const [news, setNews] = useState<EditableArticle[]>([]);
-  const [mode, setMode] = useState<Mode>('idle');
-  const [editBuffer, setEditBuffer] = useState<EditableArticle | null>(null);
-  const [originalSlug, setOriginalSlug] = useState<string | null>(null);
-  const [rawContent, setRawContent] = useState('');
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const loadArticles = useCallback(async () => {
-    setLoading(true);
-    try {
-      const articles = await fetchAllArticles();
-      setNews(articles);
-    } catch {
-      showMsg('Erro ao carregar notícias.', true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+/* eslint-disable @next/next/no-img-element -- Private previews need session cookies; article images retain their natural proportions. */
+"use client";
+import Link from "next/link";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { DbArticle } from "@/lib/supabase-articles";
+import type { Access, Edition } from "@/lib/domain";
+import { can, statusLabels, kindLabels, formatDate } from "@/lib/domain";
+import { categoryLabels } from "@/data/news";
+import { command, readApi, uploadFile } from "@/lib/client-api";
+export function AdminNewsManager({
+  access,
+  editions,
+}: {
+  access: Access;
+  editions: Edition[];
+}) {
+  const [items, setItems] = useState<DbArticle[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [draft, setDraft] = useState<Partial<DbArticle> | null>(null);
+  const [body, setBody] = useState("");
+  const [sources, setSources] = useState("");
+  const [tags, setTags] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [history, setHistory] = useState<
+    {
+      id: number;
+      created_at: string;
+      actor_id: string;
+      action: string;
+      after_data: DbArticle;
+    }[]
+  >([]);
+  const operation = useRef<string | null>(null);
+  const editor = can(access, "editor");
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const r = await readApi<{ items: DbArticle[]; total: number }>(
+        "/api/admin/articles?" +
+          new URLSearchParams({ page: String(page), q, status }),
+        signal,
+      );
+      setItems(r.items);
+      setLoaded(true);
+      setLoadError(false);
+      setTotal(r.total);
+    },
+    [page, q, status],
+  );
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadInitialArticles() {
-      try {
-        const articles = await fetchAllArticles();
-        if (!cancelled) setNews(articles);
-      } catch {
-        if (!cancelled) {
-          setMessage('Erro ao carregar notícias.');
-          setIsError(true);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadInitialArticles();
+    const c = new AbortController();
+    const timeout = setTimeout(
+      () =>
+        load(c.signal).catch((e) => {
+          if (!c.signal.aborted) {
+            setMessage(e.message);
+            setLoadError(true);
+          }
+        }),
+      250,
+    );
     return () => {
-      cancelled = true;
+      clearTimeout(timeout);
+      c.abort();
     };
-  }, []);
-
-  function showMsg(msg: string, error = false) {
-    setMessage(msg);
-    setIsError(error);
-  }
-
-  function openForm(article: EditableArticle, slug: string | null, m: Mode) {
-    setEditBuffer({ ...article });
-    setRawContent(stringifyArticleBody(article.content));
-    setOriginalSlug(slug);
-    setMode(m);
-    setMessage('');
-  }
-
-  function handleNew() {
-    const draft: EditableArticle = {
-      ...emptyArticle(),
-      slug: `nova-materia-${Date.now()}`,
-      title: '',
-      subtitle: '',
-      author: '',
-      date: '',
-      readingTime: '5 min',
-      coverImage: '',
-      content: ['']
+  }, [load]);
+  useEffect(() => {
+    if (!dirty) return;
+    const leave = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
     };
-    openForm(draft, null, 'creating');
+    window.addEventListener("beforeunload", leave);
+    return () => window.removeEventListener("beforeunload", leave);
+  }, [dirty]);
+  function field(key: keyof DbArticle, value: unknown) {
+    setDraft((d) => ({ ...d, [key]: value }));
+    setDirty(true);
+    operation.current = null;
   }
-
-  function handleSelect(article: EditableArticle) {
-    openForm(article, article.slug, 'editing');
+  function select(a: Partial<DbArticle>) {
+    setDraft(a);
+    setBody(a.content?.paragraphs.join("\n\n") || "");
+    setSources(a.sources?.map((s) => s.title + " | " + s.url).join("\n") || "");
+    setTags(a.tags?.join(", ") || "");
+    setDirty(false);
+    setHistory([]);
+    operation.current = null;
   }
-
-  function updateField<K extends keyof EditableArticle>(field: K, value: EditableArticle[K]) {
-    setEditBuffer((prev) => prev ? { ...prev, [field]: value } : prev);
-  }
-
-  function handleContentChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const raw = e.target.value;
-    setRawContent(raw);
-    const paragraphs = raw.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-    updateField('content', paragraphs.length > 0 ? paragraphs : ['']);
-  }
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    showMsg('Enviando imagem...');
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!draft) return;
+    setBusy(true);
+    setMessage("");
+    operation.current ||= crypto.randomUUID();
     try {
-      const url = await uploadCoverImage(file);
-      updateField('coverImage', url);
-      showMsg('\u2713 Imagem enviada com sucesso!');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      showMsg('Erro no upload: ' + msg, true);
+      const content = {
+        paragraphs: body
+          .split(/\n\s*\n/)
+          .map((p) => p.trim())
+          .filter(Boolean),
+      };
+      const sourceList = sources
+        .split("\n")
+        .filter((s) => s.trim())
+        .map((s) => {
+          const n = s.indexOf("|");
+          return { title: s.slice(0, n).trim(), url: s.slice(n + 1).trim() };
+        });
+      const result = await command<{ id: string; version: number }>(
+        "article.save",
+        {
+          ...draft,
+          content,
+          sources: sourceList,
+          tags: tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+        },
+        operation.current,
+      );
+      select(await readApi<DbArticle>("/api/admin/articles?id=" + result.id));
+      setMessage(
+        "Matéria salva. Estado: " + statusLabels[draft.status || "draft"] + ".",
+      );
+      await load();
+    } catch (e) {
+      setMessage((e as Error).message);
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setBusy(false);
     }
   }
-
-  async function handleSave() {
-    if (!editBuffer) return;
-    const paragraphs = rawContent.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-    const toSave: EditableArticle = {
-      ...editBuffer,
-      content: paragraphs.length > 0 ? paragraphs : [''],
-    };
-    setSaving(true);
-    showMsg('');
-    try {
-      if (mode === 'creating') {
-        await createArticle(toSave);
-        showMsg('\u2713 Matéria publicada com sucesso!');
-      } else if (mode === 'editing' && originalSlug) {
-        await updateArticle(originalSlug, toSave);
-        showMsg('\u2713 Alterações salvas com sucesso!');
-      }
-      await loadArticles();
-      setOriginalSlug(toSave.slug);
-      setMode('editing');
-      setEditBuffer(toSave);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      showMsg('Erro ao salvar: ' + msg, true);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete(slug: string) {
-    if (!confirm('Remover esta matéria?')) return;
-    setSaving(true);
-    try {
-      await deleteArticle(slug);
-      await loadArticles();
-      if (originalSlug === slug) {
-        setMode('idle');
-        setEditBuffer(null);
-        setOriginalSlug(null);
-      }
-      showMsg('Matéria removida.');
-    } catch {
-      showMsg('Erro ao remover.', true);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleCancel() {
-    setMode('idle');
-    setEditBuffer(null);
-    setOriginalSlug(null);
-    setMessage('');
-  }
-
   return (
-    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-      {/* Lista */}
-      <aside className="card-border p-4">
-        <button onClick={handleNew} disabled={saving}
-          className="mb-4 w-full bg-gold px-4 py-2 font-semibold text-ink hover:bg-amber-400 disabled:opacity-50">
-          + Nova notícia
-        </button>
-        {loading ? (
-          <p className="text-sm text-zinc-400">Carregando...</p>
-        ) : news.length === 0 ? (
-          <p className="text-sm text-zinc-400">Nenhuma notícia ainda.</p>
-        ) : (
-          <div className="space-y-2">
-            {news.map((a) => (
-              <div key={a.slug} className={`rounded border p-3 ${
-                originalSlug === a.slug ? 'border-gold/60 bg-zinc-800' : 'border-zinc-800'
-              }`}>
-                <button className="w-full text-left" onClick={() => handleSelect(a)}>
-                  <p className="font-semibold text-zinc-100 text-sm">{a.title || '(sem título)'}</p>
-                  <p className="text-xs text-zinc-500">{categoryLabels[a.category]}</p>
-                  {a.date && <p className="text-xs text-zinc-600 mt-0.5">{a.date}</p>}
-                </button>
-                <button onClick={() => handleDelete(a.slug)} disabled={saving}
-                  className="mt-1 text-xs text-rose-400 hover:text-rose-300 disabled:opacity-50">
-                  Remover
-                </button>
-              </div>
+    <div className="space-y-7">
+      <div className="flex flex-wrap items-end gap-4">
+        <label>
+          Buscar no painel
+          <input
+            className="sis-input mt-2 block"
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(1);
+            }}
+            maxLength={100}
+          />
+        </label>
+        <label>
+          Estado
+          <select
+            className="sis-input mt-2 block"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Todos</option>
+            {Object.entries(statusLabels).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
             ))}
-          </div>
-        )}
-      </aside>
-
-      {/* Formulário */}
-      <section className="card-border p-6">
-        {mode === 'idle' || !editBuffer ? (
-          <div className="flex h-48 flex-col items-center justify-center gap-2 text-center">
-            <p className="text-zinc-400">Selecione uma notícia ou crie uma nova.</p>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <p className="text-xs uppercase tracking-widest text-gold">
-              {mode === 'creating' ? '+ Nova matéria' : 'Editando matéria'}
+          </select>
+        </label>
+        <button
+          disabled={dirty || busy}
+          className="sis-button"
+          onClick={() =>
+            select({
+              title: "",
+              slug: "",
+              subtitle: "",
+              category: "juridico",
+              author: "",
+              status: "draft",
+              kind: "simulation",
+              edition_id: editions[0]?.id,
+              comments_open: true,
+              cover_image: "",
+            })
+          }
+        >
+          Nova matéria
+        </button>
+      </div>
+      <p role="status" aria-live="polite" className="text-gold">
+        {message}
+      </p>
+      {dirty ? (
+        <p className="card-border p-4 text-gold">
+          Há alterações não salvas. Salve antes de trocar de matéria ou{" "}
+          <button
+            className="underline"
+            onClick={() => {
+              setDirty(false);
+              setDraft(null);
+            }}
+          >
+            descarte as alterações
+          </button>
+          .
+        </p>
+      ) : null}
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="space-y-3">
+          <h2 className="font-display text-xl">Matérias ({total})</h2>
+          {!loaded && !loadError ? (
+            <p role="status">Carregando registros…</p>
+          ) : null}
+          {loaded && !loadError && !items.length ? (
+            <p className="text-sm text-zinc-400">
+              Nenhuma matéria nesta consulta.
             </p>
-
-            {/* Data automática (somente leitura) */}
-            {mode === 'creating' ? (
-              <div className="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="10" />
-                  <path strokeLinecap="round" d="M12 6v6l4 2" />
-                </svg>
-                Data e horário serão registrados automaticamente ao publicar.
-              </div>
-            ) : editBuffer.date ? (
-              <div className="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="10" />
-                  <path strokeLinecap="round" d="M12 6v6l4 2" />
-                </svg>
-                Publicado em: <span className="text-zinc-200">{editBuffer.date}</span>
+          ) : null}
+          {items.map((a) => (
+            <button
+              key={a.id}
+              disabled={dirty || busy}
+              className="card-border block w-full space-y-2 p-4 text-left"
+              onClick={async () => {
+                try {
+                  select(
+                    await readApi<DbArticle>("/api/admin/articles?id=" + a.id),
+                  );
+                } catch (e) {
+                  setMessage((e as Error).message);
+                }
+              }}
+            >
+              <span className="text-xs text-gold">
+                {statusLabels[a.status]}
+              </span>
+              <strong className="block">{a.title}</strong>
+              <span className="text-xs text-zinc-400">
+                {formatDate(a.updated_at)}
+              </span>
+            </button>
+          ))}
+          <div className="flex items-center justify-between gap-2">
+            <button
+              disabled={page === 1 || dirty}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </button>
+            <span>{page}</span>
+            <button
+              disabled={page * 20 >= total || dirty}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próxima →
+            </button>
+          </div>
+        </aside>
+        {draft ? (
+          <form onSubmit={save} className="card-border space-y-5 p-5 sm:p-7">
+            <div className="flex flex-wrap justify-between gap-4">
+              <h2 className="font-display text-3xl">
+                {draft.id ? "Editar matéria" : "Novo rascunho"}
+              </h2>
+              {draft.id ? (
+                <Link
+                  className="text-gold underline"
+                  target="_blank"
+                  href={"/admin/previa/" + draft.id}
+                >
+                  Prévia protegida
+                </Link>
+              ) : null}
+            </div>
+            <label className="block">
+              Título
+              <input
+                className="sis-input mt-2 w-full"
+                required
+                minLength={5}
+                maxLength={180}
+                value={draft.title || ""}
+                onChange={(e) => field("title", e.target.value)}
+              />
+            </label>
+            <label className="block">
+              Endereço (slug)
+              <input
+                className="sis-input mt-2 w-full"
+                required
+                pattern="[a-z0-9][a-z0-9-]{0,149}"
+                maxLength={150}
+                value={draft.slug || ""}
+                onChange={(e) => field("slug", e.target.value)}
+              />
+              <span className="text-xs text-zinc-400">
+                Letras minúsculas sem acentos e hífens. Endereços antigos
+                continuarão redirecionando.
+              </span>
+            </label>
+            <label className="block">
+              Resumo
+              <textarea
+                className="sis-input mt-2 w-full"
+                maxLength={500}
+                value={draft.subtitle || ""}
+                onChange={(e) => field("subtitle", e.target.value)}
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label>
+                Comitê
+                <select
+                  className="sis-input mt-2 w-full"
+                  value={draft.category}
+                  onChange={(e) => field("category", e.target.value)}
+                >
+                  {Object.entries(categoryLabels).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Edição
+                <select
+                  required
+                  className="sis-input mt-2 w-full"
+                  value={draft.edition_id || ""}
+                  onChange={(e) => field("edition_id", e.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  {editions.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label className="block">
+              Autoria exibida
+              <input
+                required
+                minLength={2}
+                maxLength={120}
+                className="sis-input mt-2 w-full"
+                value={draft.author || ""}
+                onChange={(e) => field("author", e.target.value)}
+              />
+            </label>
+            <label className="block">
+              Tipo de conteúdo
+              <select
+                className="sis-input mt-2 w-full"
+                value={draft.kind || "simulation"}
+                onChange={(e) => field("kind", e.target.value)}
+              >
+                {Object.entries(kindLabels).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              Texto da matéria
+              <textarea
+                rows={14}
+                required
+                maxLength={150000}
+                className="sis-input mt-2 w-full"
+                value={body}
+                onChange={(e) => {
+                  setBody(e.target.value);
+                  setDirty(true);
+                  operation.current = null;
+                }}
+              />
+              <span className="text-xs text-zinc-400">
+                Separe os parágrafos com uma linha em branco. Apenas texto.
+              </span>
+            </label>
+            <label className="block">
+              Tags (até 12, separadas por vírgula)
+              <input
+                className="sis-input mt-2 w-full"
+                maxLength={492}
+                value={tags}
+                onChange={(e) => {
+                  setTags(e.target.value);
+                  setDirty(true);
+                  operation.current = null;
+                }}
+              />
+            </label>
+            <label className="block">
+              Fontes (uma por linha: título | https://…)
+              <textarea
+                rows={3}
+                className="sis-input mt-2 w-full"
+                value={sources}
+                onChange={(e) => {
+                  setSources(e.target.value);
+                  setDirty(true);
+                  operation.current = null;
+                }}
+              />
+            </label>
+            <label className="block">
+              Imagem da matéria · JPEG, PNG ou WebP · até 4 MB
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="mt-2 block w-full text-sm"
+                disabled={busy}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setBusy(true);
+                  try {
+                    const r = await uploadFile(file);
+                    field("cover_image", r.url);
+                    setMessage(
+                      "Imagem validada e enviada. Ela só ficará pública com a matéria.",
+                    );
+                  } catch (e) {
+                    setMessage((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+            </label>
+            {draft.cover_image ? (
+              <div className="space-y-3">
+                <img
+                  className="max-h-60 max-w-full object-contain"
+                  src={draft.cover_image}
+                  alt="Prévia da capa"
+                />
+                <button
+                  type="button"
+                  className="text-sm underline"
+                  onClick={() => field("cover_image", "")}
+                >
+                  Remover vínculo da capa
+                </button>
               </div>
             ) : null}
-
-            {/* Campos básicos (sem data) */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {([
-                ['title', 'Título', 'text', 'Título da matéria'],
-                ['subtitle', 'Subtítulo', 'text', 'Subtítulo'],
-                ['author', 'Autor', 'text', 'Nome do autor'],
-                ['readingTime', 'Tempo de leitura', 'text', 'ex: 5 min'],
-              ] as const).map(([field, label, type, placeholder]) => (
-                <div key={field} className="flex flex-col gap-1">
-                  <label className="text-xs text-zinc-500">{label}</label>
-                  <input
-                    type={type}
-                    value={String(editBuffer[field] ?? '')}
-                    onChange={(e) => updateField(field, e.target.value as never)}
-                    className="rounded bg-zinc-900 p-3 text-zinc-100 outline-none focus:ring-1 focus:ring-gold"
-                    placeholder={placeholder}
-                  />
-                </div>
-              ))}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-zinc-500">Categoria</label>
-                <select value={editBuffer.category}
-                  onChange={(e) => updateField('category', e.target.value as EditableArticle['category'])}
-                  className="rounded bg-zinc-900 p-3 text-zinc-100 outline-none focus:ring-1 focus:ring-gold">
-                  {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Destaque */}
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
-              <input type="checkbox" checked={editBuffer.featured ?? false}
-                onChange={(e) => updateField('featured', e.target.checked)} />
-              Marcar como matéria em destaque
-            </label>
-
-            {/* Imagem de capa */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-zinc-500">Imagem de capa</label>
-              <div className="rounded border border-zinc-700 p-4 space-y-3">
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2">Enviar arquivo do computador:</p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="text-sm text-zinc-300 file:mr-3 file:cursor-pointer file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-1.5 file:text-xs file:text-zinc-200 hover:file:bg-zinc-600 disabled:opacity-50"
-                  />
-                  {uploading && <p className="mt-1 text-xs text-amber-400 animate-pulse">Enviando...</p>}
-                </div>
-                <div>
-                  <p className="text-xs text-zinc-500 mb-1">Ou cole uma URL:</p>
-                  <input
-                    value={editBuffer.coverImage}
-                    onChange={(e) => updateField('coverImage', e.target.value)}
-                    className="w-full rounded bg-zinc-900 p-2 text-sm text-zinc-100 outline-none focus:ring-1 focus:ring-gold"
-                    placeholder="https://..."
-                  />
-                </div>
-                {editBuffer.coverImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={editBuffer.coverImage} alt="Preview da capa"
-                    className="aspect-video w-full rounded border border-zinc-700 bg-velvet object-contain" />
-                ) : (
-                  <div className="h-20 w-full rounded border border-dashed border-zinc-700 flex items-center justify-center">
-                    <span className="text-xs text-zinc-600">Sem imagem</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Conteúdo */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-zinc-500">
-                Conteúdo — pressione <kbd className="rounded bg-zinc-800 px-1 py-0.5 text-xs">Enter</kbd> duas vezes para novo parágrafo
-              </label>
-              <textarea
-                value={rawContent}
-                onChange={handleContentChange}
-                className="h-72 w-full rounded bg-zinc-900 p-4 text-zinc-100 leading-relaxed outline-none focus:ring-1 focus:ring-gold resize-y"
-                placeholder={`Escreva o primeiro parágrafo aqui...\n\nDê Enter duas vezes para começar um novo parágrafo.`}
+            <label className="block">
+              Crédito da imagem
+              <input
+                className="sis-input mt-2 w-full"
+                maxLength={300}
+                value={draft.image_credit || ""}
+                onChange={(e) => field("image_credit", e.target.value)}
               />
-              <p className="text-xs text-zinc-600">{editBuffer.content.filter(Boolean).length} parágrafo(s)</p>
+            </label>
+            <label className="block">
+              Nota pública de correção
+              <textarea
+                className="sis-input mt-2 w-full"
+                maxLength={2000}
+                value={draft.correction_note || ""}
+                onChange={(e) => field("correction_note", e.target.value)}
+              />
+            </label>
+            <div className="flex flex-wrap gap-5">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={!!draft.featured}
+                  onChange={(e) => field("featured", e.target.checked)}
+                />{" "}
+                Destaque
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.comments_open !== false}
+                  onChange={(e) => field("comments_open", e.target.checked)}
+                />{" "}
+                Permitir comentários quando a operação global estiver aberta
+              </label>
             </div>
-
-            {/* Ações */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button onClick={handleSave} disabled={saving || uploading}
-                className="bg-gold px-6 py-2.5 font-semibold text-ink hover:bg-amber-400 disabled:opacity-50 rounded">
-                {saving ? 'Salvando...' : mode === 'creating' ? 'Publicar matéria' : 'Salvar alterações'}
+            <label className="block">
+              Estado de publicação
+              <select
+                className="sis-input mt-2 w-full"
+                value={draft.status || "draft"}
+                onChange={(e) => field("status", e.target.value)}
+              >
+                {Object.entries(statusLabels)
+                  .filter(([k]) => editor || ["draft", "review"].includes(k))
+                  .map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <button disabled={busy} className="sis-button">
+              {busy ? "Salvando…" : "Salvar matéria"}
+            </button>
+            {draft.id ? (
+              <button
+                type="button"
+                className="ml-4 underline"
+                onClick={async () => {
+                  try {
+                    setHistory(
+                      await readApi(
+                        "/api/admin/dashboard?kind=history&q=" + draft.id,
+                      ),
+                    );
+                  } catch (e) {
+                    setMessage((e as Error).message);
+                  }
+                }}
+              >
+                Histórico de alterações
               </button>
-              <button onClick={handleCancel} disabled={saving}
-                className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200 disabled:opacity-50">
-                Cancelar
-              </button>
-              {message && (
-                <span className={`text-sm ${isError ? 'text-rose-400' : 'text-emerald-400'}`}>
-                  {message}
-                </span>
-              )}
-            </div>
+            ) : null}
+            {history.map((h) => (
+              <details key={h.id} className="border-t border-zinc-800 pt-3">
+                <summary>
+                  Revisão {h.after_data.version} · {formatDate(h.created_at)} ·{" "}
+                  {h.actor_id}
+                </summary>
+                <p className="mt-2 font-semibold">{h.after_data.title}</p>
+                <p className="whitespace-pre-wrap text-sm">
+                  {h.after_data.content?.paragraphs.join("\n\n")}
+                </p>
+              </details>
+            ))}
+          </form>
+        ) : (
+          <div className="card-border p-8 text-zinc-400">
+            Selecione uma matéria ou crie um rascunho.
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }
