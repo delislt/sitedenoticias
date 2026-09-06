@@ -2,6 +2,7 @@ import { ReaderAccount } from "@/components/ReaderAccount";
 import { currentSession } from "@/lib/auth";
 import { getSettings } from "@/lib/resources";
 import { safeReturn } from "@/lib/domain";
+import { redirect } from "next/navigation";
 export const metadata = {
   title: "Sua conta | Jornal SIS",
   robots: { index: false, follow: false },
@@ -16,11 +17,14 @@ export default async function AccountPage({
     confirmed?: string;
   }>;
 }) {
-  const [{ access }, settings, p] = await Promise.all([
+  const [session, settings, p] = await Promise.all([
     currentSession(),
     getSettings(),
     searchParams,
   ]);
+  const next = safeReturn(p.next);
+  if (session.user && !session.user.email_confirmed_at)
+    redirect("/conta/verificar-email?next=" + encodeURIComponent(next));
   return (
     <div className="container-premium space-y-8 py-12">
       <h1 className="font-display text-center text-4xl">
@@ -43,9 +47,11 @@ export default async function AccountPage({
         </p>
       ) : null}
       <ReaderAccount
-        access={access}
-        next={safeReturn(p.next)}
+        access={session.access}
+        next={next}
         registration={settings.readers_enabled}
+        emailVerified={Boolean(session.user?.email_confirmed_at)}
+        confirmationComplete={Boolean(p.confirmed)}
       />
     </div>
   );

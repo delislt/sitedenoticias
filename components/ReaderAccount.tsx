@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -11,10 +11,14 @@ export function ReaderAccount({
   access,
   next,
   registration,
+  emailVerified,
+  confirmationComplete,
 }: {
   access: Access;
   next: string;
   registration: boolean;
+  emailVerified: boolean;
+  confirmationComplete: boolean;
 }) {
   const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
@@ -24,6 +28,36 @@ export function ReaderAccount({
   const [name, setName] = useState(access.display_name || "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [pendingVerification, setPendingVerification] = useState(false);
+  useEffect(() => {
+    if (emailVerified || confirmationComplete) {
+      localStorage.removeItem("sis-email-verification-pending");
+      sessionStorage.removeItem("sis-pending-email");
+      const timer = window.setTimeout(() => setPendingVerification(false), 0);
+      return () => window.clearTimeout(timer);
+    }
+    const timer = window.setTimeout(
+      () =>
+        setPendingVerification(
+          localStorage.getItem("sis-email-verification-pending") === "1",
+        ),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [confirmationComplete, emailVerified]);
+  function rememberPendingEmail() {
+    localStorage.setItem("sis-email-verification-pending", "1");
+    sessionStorage.setItem("sis-pending-email", email.trim());
+    setPendingVerification(true);
+  }
+  function clearPendingEmail() {
+    localStorage.removeItem("sis-email-verification-pending");
+    sessionStorage.removeItem("sis-pending-email");
+    setPendingVerification(false);
+  }
+  function verificationPage() {
+    return "/conta/verificar-email?next=" + encodeURIComponent(next);
+  }
   async function google() {
     setBusy(true);
     setMessage("");
@@ -70,7 +104,7 @@ export function ReaderAccount({
     try {
       const db = createClient();
       if (mode === "signup") {
-        const { error } = await db.auth.signUp({
+        const { data, error } = await db.auth.signUp({
           email,
           password,
           options: {
@@ -79,12 +113,31 @@ export function ReaderAccount({
           },
         });
         if (error) throw error;
-        setMessage(
-          "Confira seu email para verificar a conta. Depois, entre e escolha seu nome de exibição.",
-        );
+        if (!data.user?.email_confirmed_at) {
+          rememberPendingEmail();
+          router.push(verificationPage());
+          return;
+        }
+        clearPendingEmail();
+        router.push("/conta?next=" + encodeURIComponent(next));
+        router.refresh();
       } else {
-        const { error } = await db.auth.signInWithPassword({ email, password });
+        const { data, error } = await db.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error?.code === "email_not_confirmed") {
+          rememberPendingEmail();
+          router.push(verificationPage());
+          return;
+        }
         if (error) throw error;
+        if (!data.user.email_confirmed_at) {
+          rememberPendingEmail();
+          router.push(verificationPage());
+          return;
+        }
+        clearPendingEmail();
         router.push("/conta?next=" + encodeURIComponent(next));
         router.refresh();
       }
@@ -230,6 +283,29 @@ export function ReaderAccount({
         </>
       ) : (
         <>
+          {pendingVerification ? (
+            <section
+              aria-labelledby="pending-verification-title"
+              className="card-border space-y-3 border-gold p-5"
+            >
+              <p role="alert" className="text-xs uppercase tracking-widest text-gold">
+                Verificação necessária
+              </p>
+              <h2 id="pending-verification-title" className="font-display text-2xl">
+                Email ainda pendente
+              </h2>
+              <p>
+                Confirme o endereço enviado para liberar sua conta. Se precisar,
+                solicite outro email e retome a verificação.
+              </p>
+              <Link
+                href={verificationPage()}
+                className="sis-button inline-block"
+              >
+                Reenviar ou concluir verificação
+              </Link>
+            </section>
+          ) : null}
           <div className="grid grid-cols-2 gap-3" aria-label="Forma de acesso">
             <button
               type="button"
@@ -254,9 +330,27 @@ export function ReaderAccount({
             type="button"
             disabled={busy}
             onClick={() => void google()}
-            className="sis-button w-full"
+            className="google-button"
           >
-            Continuar com Google
+            <svg aria-hidden="true" viewBox="0 0 18 18" width="18" height="18">
+              <path
+                fill="#4285F4"
+                d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.482h4.844a4.14 4.14 0 0 1-1.797 2.716v2.258h2.909c1.702-1.567 2.684-3.874 2.684-6.615Z"
+              />
+              <path
+                fill="#34A853"
+                d="M9 18c2.43 0 4.468-.806 5.956-2.18l-2.909-2.258c-.806.54-1.835.859-3.047.859-2.344 0-4.328-1.585-5.037-3.714H.956v2.332A9 9 0 0 0 9 18Z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M3.963 10.707A5.41 5.41 0 0 1 3.682 9c0-.592.102-1.168.281-1.707V4.961H.956A9 9 0 0 0 0 9c0 1.452.347 2.827.956 4.039l3.007-2.332Z"
+              />
+              <path
+                fill="#EA4335"
+                d="M9 3.579c1.321 0 2.507.454 3.441 1.346l2.581-2.581C13.464.892 11.426 0 9 0A9 9 0 0 0 .956 4.961l3.007 2.332C4.672 5.164 6.656 3.579 9 3.579Z"
+              />
+            </svg>
+            <span>Continuar com Google</span>
           </button>
           <p className="text-center text-sm text-zinc-400">
             ou use seu email e senha

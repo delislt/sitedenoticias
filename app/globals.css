@@ -296,6 +296,9 @@ html[data-theme='light'] textarea {
 .account-mode-button { min-height: 2.75rem; border: 1px solid #b08d57; border-radius: .25rem; padding: .65rem 1rem; background: var(--site-control); color: var(--site-text); font-weight: 600; transition: border-color .18s ease, background-color .18s ease, color .18s ease; }
 .account-mode-button:hover { border-color: #d8b978; color: #d8b978; }
 .account-mode-button[aria-pressed='true'] { border-width: 2px; background: color-mix(in srgb, var(--site-control) 72%, #b08d57); color: #d8b978; }
+.google-button { display: flex; width: 100%; min-height: 2.75rem; align-items: center; justify-content: center; gap: .75rem; border: 1px solid #dadce0; border-radius: .25rem; background: #fff; color: #3c4043; padding: .65rem 1rem; font-weight: 500; box-shadow: 0 1px 2px rgba(60,64,67,.18); transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.google-button:hover { border-color: #c2c5ca; background: #f8faff; box-shadow: 0 1px 3px rgba(60,64,67,.28); }
+.google-button:focus-visible { outline: 2px solid #4285f4; outline-offset: 3px; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 :where(a,button,input,textarea,select):focus-visible { outline: 2px solid #b08d57; outline-offset: 4px; }
 .skip-link { position: fixed; top: -100px; left: 1rem; z-index: 100; background: var(--site-bg); color: var(--site-text); padding: 1rem; }
