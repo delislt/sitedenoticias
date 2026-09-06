@@ -187,14 +187,13 @@ export function ReaderAccount({
             </p>
           ) : (
             <details className="card-border p-5">
-              <summary>Verificação adicional por código de email</summary>
-              <p className="my-4 text-sm text-zinc-400">
-                O envio está em configuração e pode não estar disponível para
-                todos os emails.
-              </p>
+              <summary className="cursor-pointer font-semibold">
+                Proteção extra por código (opcional)
+              </summary>
               <EmailSecondFactor
                 next={next}
                 primaryValid={access.primary_valid === true}
+                optional
               />
             </details>
           )}
@@ -288,10 +287,16 @@ export function ReaderAccount({
               aria-labelledby="pending-verification-title"
               className="card-border space-y-3 border-gold p-5"
             >
-              <p role="alert" className="text-xs uppercase tracking-widest text-gold">
+              <p
+                role="alert"
+                className="text-xs uppercase tracking-widest text-gold"
+              >
                 Verificação necessária
               </p>
-              <h2 id="pending-verification-title" className="font-display text-2xl">
+              <h2
+                id="pending-verification-title"
+                className="font-display text-2xl"
+              >
                 Email ainda pendente
               </h2>
               <p>
