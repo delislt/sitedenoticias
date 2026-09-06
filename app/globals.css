@@ -291,8 +291,11 @@ html[data-theme='light'] textarea {
 }
 
 .sis-input { border: 1px solid var(--site-border); background: var(--site-control); color: var(--site-text); border-radius: .25rem; padding: .6rem .75rem; }
-.sis-button { border: 1px solid var(--site-border); background: var(--site-control); color: var(--site-text); border-radius: .25rem; padding: .6rem 1rem; }
-.sis-button:hover { border-color: #b08d57; }
+.sis-button { border: 2px solid #b08d57; background: var(--site-control); color: var(--site-text); border-radius: .25rem; padding: .6rem 1rem; font-weight: 600; transition: border-color .18s ease, background-color .18s ease, color .18s ease; }
+.sis-button:hover { border-color: #d8b978; background: color-mix(in srgb, var(--site-control) 82%, #b08d57); }
+.account-mode-button { min-height: 2.75rem; border: 1px solid #b08d57; border-radius: .25rem; padding: .65rem 1rem; background: var(--site-control); color: var(--site-text); font-weight: 600; transition: border-color .18s ease, background-color .18s ease, color .18s ease; }
+.account-mode-button:hover { border-color: #d8b978; color: #d8b978; }
+.account-mode-button[aria-pressed='true'] { border-width: 2px; background: color-mix(in srgb, var(--site-control) 72%, #b08d57); color: #d8b978; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 :where(a,button,input,textarea,select):focus-visible { outline: 2px solid #b08d57; outline-offset: 4px; }
 .skip-link { position: fixed; top: -100px; left: 1rem; z-index: 100; background: var(--site-bg); color: var(--site-text); padding: 1rem; }

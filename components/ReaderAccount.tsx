@@ -230,16 +230,20 @@ export function ReaderAccount({
         </>
       ) : (
         <>
-          <div className="flex gap-4">
+          <div className="grid grid-cols-2 gap-3" aria-label="Forma de acesso">
             <button
-              className={mode === "login" ? "text-gold underline" : ""}
+              type="button"
+              className="account-mode-button"
+              aria-pressed={mode === "login"}
               onClick={() => setMode("login")}
             >
               Entrar
             </button>
             {registration ? (
               <button
-                className={mode === "signup" ? "text-gold underline" : ""}
+                type="button"
+                className="account-mode-button"
+                aria-pressed={mode === "signup"}
                 onClick={() => setMode("signup")}
               >
                 Criar conta de leitor
