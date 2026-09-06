@@ -5,6 +5,8 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { command } from "@/lib/client-api";
 import { type Access, can, siteUrl } from "@/lib/domain";
+import { EmailSecondFactor } from "@/components/EmailSecondFactor";
+import { AvatarEditor } from "@/components/AvatarEditor";
 export function ReaderAccount({
   access,
   next,
@@ -22,6 +24,45 @@ export function ReaderAccount({
   const [name, setName] = useState(access.display_name || "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  async function google() {
+    setBusy(true);
+    setMessage("");
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: siteUrl + "/auth/callback?next=" + encodeURIComponent(next),
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error) {
+      setMessage("Não foi possível abrir o Google. Tente novamente.");
+      setBusy(false);
+    }
+  }
+  async function resend() {
+    if (!email.trim()) {
+      setMessage("Preencha seu email para reenviar a confirmação.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await createClient().auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: siteUrl + "/auth/callback" },
+      });
+      if (error) throw error;
+      setMessage(
+        "Se houver um cadastro pendente, você receberá uma nova confirmação. Use somente o email mais recente.",
+      );
+    } catch {
+      setMessage(
+        "Não foi possível reenviar agora. Aguarde um minuto e tente novamente.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function auth(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -67,19 +108,46 @@ export function ReaderAccount({
       setBusy(false);
     }
   }
+  if (access.user_id && !access.verified)
+    return (
+      <EmailSecondFactor
+        next={next}
+        primaryValid={access.primary_valid === true}
+      />
+    );
   return (
     <div className="mx-auto max-w-xl space-y-6">
       {access.user_id ? (
         <>
-          <p>
-            Você está conectado
-            {access.verified
-              ? " com uma conta verificada"
-              : ". Confirme seu email para participar"}
-            .
-          </p>
+          <div className="card-border space-y-3 p-6">
+            <h2 className="font-display text-3xl">Login concluído</h2>
+            <p>Seu email está confirmado e sua conta está pronta para usar.</p>
+            <Link href={next} className="sis-button inline-block">
+              {next.startsWith("/admin")
+                ? "Continuar para o painel"
+                : "Continuar no Jornal SIS"}
+            </Link>
+          </div>
+          {access.email_otp_verified ? (
+            <p className="text-sm text-gold">
+              Código por email confirmado nesta sessão.
+            </p>
+          ) : (
+            <details className="card-border p-5">
+              <summary>Verificação adicional por código de email</summary>
+              <p className="my-4 text-sm text-zinc-400">
+                O envio está em configuração e pode não estar disponível para
+                todos os emails.
+              </p>
+              <EmailSecondFactor
+                next={next}
+                primaryValid={access.primary_valid === true}
+              />
+            </details>
+          )}
           {access.verified ? (
             <form onSubmit={save} className="card-border space-y-4 p-5">
+              <h2 className="font-display text-2xl">Seu perfil</h2>
               <label className="block">
                 Nome de exibição
                 <input
@@ -99,6 +167,10 @@ export function ReaderAccount({
               </button>
             </form>
           ) : null}
+          <AvatarEditor />
+          <Link href="/conta/senha" className="sis-button inline-block">
+            Alterar senha
+          </Link>
           <p className="break-all text-xs text-zinc-400">
             Identificador privado da sua conta: {access.user_id}
           </p>
@@ -174,6 +246,17 @@ export function ReaderAccount({
               </button>
             ) : null}
           </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void google()}
+            className="sis-button w-full"
+          >
+            Continuar com Google
+          </button>
+          <p className="text-center text-sm text-zinc-400">
+            ou use seu email e senha
+          </p>
           <form onSubmit={auth} className="card-border space-y-5 p-6">
             <label className="block">
               Email
@@ -209,6 +292,21 @@ export function ReaderAccount({
                   : "Criar conta e verificar email"}
             </button>
           </form>
+          <Link href="/conta/esqueci-senha" className="block text-sm underline">
+            Esqueci minha senha
+          </Link>
+          <p className="text-sm text-zinc-400">
+            No cadastro por email, confirme o endereço recebido na sua caixa de
+            entrada antes do primeiro login.
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void resend()}
+            className="text-sm underline"
+          >
+            Reenviar confirmação do cadastro
+          </button>
           {!registration ? (
             <p className="text-sm text-zinc-400">
               Novos cadastros de leitores aguardam a configuração da equipe

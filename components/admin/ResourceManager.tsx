@@ -16,17 +16,8 @@ type Field = {
   required?: boolean;
 };
 const committees: [string, string][] = Object.entries(categoryLabels);
-const base: Field[] = [
-  { key: "edition_id", label: "Edição", type: "select", required: true },
-];
 const fields: Record<string, Field[]> = {
-  edition: [
-    { key: "slug", label: "Identificador da edição", required: true },
-    { key: "title", label: "Título", required: true },
-    { key: "year", label: "Ano", type: "number", required: true },
-  ],
   session: [
-    ...base,
     {
       key: "category",
       label: "Comitê",
@@ -97,7 +88,6 @@ const fields: Record<string, Field[]> = {
     },
   ],
   document: [
-    ...base,
     {
       key: "category",
       label: "Comitê",
@@ -145,7 +135,6 @@ const fields: Record<string, Field[]> = {
     },
   ],
   announcement: [
-    ...base,
     { key: "title", label: "Título do aviso oficial", required: true },
     {
       key: "body",
@@ -156,7 +145,6 @@ const fields: Record<string, Field[]> = {
   ],
 };
 const labels: Record<string, string> = {
-  edition: "Edições",
   session: "Agenda e sessões",
   update: "Cobertura por sessão",
   document: "Biblioteca",
@@ -236,7 +224,7 @@ export function ResourceManager({
       setEdit({ ...edit, ...result });
       setDirty(false);
       setMessage(
-        "Registro salvo. Recarregue esta página para atualizar as opções de novas edições e sessões.",
+        "Registro salvo. Recarregue esta página para atualizar as opções de novas sessões.",
       );
       await load();
     } catch (e) {

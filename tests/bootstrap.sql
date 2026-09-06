@@ -4,7 +4,7 @@ create role authenticated nologin;
 create role service_role nologin bypassrls;
 create schema auth;
 create schema storage;
-create table auth.users(id uuid primary key,created_at timestamptz default now(),email_confirmed_at timestamptz,is_anonymous boolean default false);
+create table auth.users(id uuid primary key,created_at timestamptz default now(),email_confirmed_at timestamptz,is_anonymous boolean default false,email text);
 create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id));
 create function auth.uid() returns uuid language sql stable as $$ select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}') $$;

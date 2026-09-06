@@ -42,8 +42,8 @@ export default async function Page() {
           ],
           [
             "/arquivo",
-            "Arquivo por edição",
-            "Revisite matérias e documentos sem perder os endereços anteriores.",
+            "Notícias do SIS",
+            "Confira a cobertura publicada pela equipe de imprensa.",
           ],
         ].map(([href, title, body]) => (
           <Link key={href} href={href} className="card-border space-y-3 p-7">

@@ -3,7 +3,6 @@ import { requireAccess } from "@/lib/auth";
 import { failure, databaseError, HttpError } from "@/lib/http";
 import { pageNumber } from "@/lib/domain";
 const columns: Record<string, string> = {
-  edition: "id,slug,title,year,published,version,updated_at",
   update:
     "id,session_id,body,author,article_id,result,organization_confirmed,correction_note,published,version,created_at,updated_at",
   document:
@@ -11,7 +10,6 @@ const columns: Record<string, string> = {
   announcement: "id,edition_id,title,body,published,version,updated_at",
 };
 const tables = {
-  edition: "editions",
   session: "sessions",
   update: "session_updates",
   document: "documents",

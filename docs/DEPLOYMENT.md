@@ -10,13 +10,13 @@
 
 ## Variáveis
 
-| Variável | Uso |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto existente |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publicável, sujeita a grants/RLS |
-| `NEXT_PUBLIC_SITE_URL` | Canonical/origem da produção; padrão `https://sisnoticias.vercel.app` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Somente servidor: arquivos validados e limpeza de retenção |
-| `CRON_SECRET` | Protege `/api/ping`, usado pelo cron Vercel existente |
+| Variável                               | Uso                                                                   |
+| -------------------------------------- | --------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | URL do projeto existente                                              |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publicável, sujeita a grants/RLS                                |
+| `NEXT_PUBLIC_SITE_URL`                 | Canonical/origem da produção; padrão `https://sisnoticias.vercel.app` |
+| `SUPABASE_SERVICE_ROLE_KEY`            | Somente servidor: arquivos validados e limpeza de retenção            |
+| `CRON_SECRET`                          | Protege `/api/ping`, usado pelo cron Vercel existente                 |
 
 Nunca prefixe service role ou segredo do cron com `NEXT_PUBLIC_`. Não commitar `.env.local`, tokens ou dumps com dados pessoais. O checkout de desenvolvimento recebeu apenas configuração pública; nenhuma service role foi copiada para o navegador ou para o repositório.
 
@@ -26,6 +26,7 @@ Aplicadas no projeto hospedado, nesta ordem:
 
 1. `20260905140355_sis_foundation.sql`
 2. `20260905140644_sis_policy_indexes.sql`
+3. `20260905214706_email_otp_access.sql`
 
 Os nomes locais acompanham os timestamps efetivamente registrados pela ferramenta do Supabase. Elas são adicionais ao schema legado: não executar em banco vazio sem antes importar a estrutura anterior. `tests/bootstrap.sql` é somente um ambiente fictício de testes, não um bootstrap para produção.
 
@@ -45,14 +46,15 @@ Não reaplicar migrations já registradas. Em futuras mudanças, gerar a migrati
 
 ## Dependências de ativação
 
-O Supabase Auth foi auditado com **disable_signup=true**, confirmação de email ativa e acesso anônimo desativado. Isso foi preservado. A interface de cadastro também começa fechada e recusa a abertura pelo painel enquanto Auth estiver bloqueado.
+O Supabase Auth foi conferido novamente com novos cadastros, confirmação de email, email/senha e Google ativos; acesso anônimo permanece desativado. A Site URL foi corrigida de localhost para `https://sisnoticias.vercel.app` e o retorno `/auth/callback**` foi autorizado.
 
 Antes de habilitar leitores, a administração precisa:
 
 - Formalizar responsáveis, canal de privacidade/recursos e participação escolar.
 - Configurar a entrega de emails (SMTP/domínio, remetente e limites) e confirmar entrega real.
-- Conferir Site URL `https://sisnoticias.vercel.app` e URLs permitidas para `/auth/callback` e `/auth/confirm`, incluindo localhost apenas no projeto de desenvolvimento.
-- Manter confirmação de email ligada e só então habilitar novos usuários no Auth e o formulário no painel.
+- Manter Site URL `https://sisnoticias.vercel.app` e o retorno permitido `/auth/callback**`; incluir localhost apenas num projeto separado de desenvolvimento.
+- Manter confirmação de email ligada. Os modelos versionados em `supabase/templates/` usam páginas intermediárias do próprio site para cadastro e recuperação.
+- Conectar SMTP de produção antes de tornar o código adicional por email obrigatório. A chave `private.auth_settings.email_otp_required` começa falsa porque o envio padrão do Supabase é provisório e limitado.
 - Rever o aviso de [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), que estava desligada. A disponibilidade depende da configuração/plano do Supabase.
 - Confirmar service role e `CRON_SECRET` no ambiente Vercel. Sem a chave de servidor, upload e manutenção não operam; a leitura pública continua independente.
 

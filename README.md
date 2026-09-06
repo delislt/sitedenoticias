@@ -7,14 +7,14 @@ A aplicação existente foi ampliada, preservando os dossiês, textos, URLs, log
 ## Funcionalidades
 
 - Notícias com rascunho, revisão, publicação e arquivamento; prévia protegida, autoria, fontes, correções, histórico e proteção contra sobrescrita.
-- Funções protegidas de jornalista, editor, moderador e administrador; conta de leitor separada.
+- Login por email e senha ou Google, confirmação de email, recuperação/troca de senha, nome e foto de perfil; funções protegidas de jornalista, editor, moderador e administrador.
 - Comentários verificados, revisão prévia inicial, respostas em um nível, edição por 15 minutos, remoção, denúncias, suspensão e histórico de decisões.
 - Busca em português, filtros compartilháveis, paginação no banco, consulta direta por slug, redirecionamento de endereços antigos e matérias relacionadas.
 - Favoritos locais e sincronização opcional, compartilhamento, tamanho de texto, impressão e metadados por artigo.
-- Agenda com ICS, biblioteca com PDFs públicos ou restritos, cobertura por sessão, avisos, glossário e arquivo por edição.
+- Agenda com ICS, biblioteca com PDFs públicos ou restritos, cobertura por sessão, avisos, glossário e arquivo de notícias.
 - Uploads privados validados no servidor, limites persistentes no banco, CSP, controle de origem e RLS.
 
-**Estado inicial:** cadastro e novos comentários ficam fechados até configurar a operação de moderação. Não foram criadas notícias, sessões ou documentos fictícios no banco hospedado. Veja as dependências reais em [implantação](docs/DEPLOYMENT.md) e o alcance da verificação em [testes](docs/VERIFICATION.md).
+**Estado atual:** o cadastro está aberto com confirmação de email e Google. Novos comentários continuam fechados até a operação de moderação ser configurada. O segundo código por email está preparado, mas só deve ser tornado obrigatório depois da conexão de um SMTP de produção. Não foram criadas notícias, sessões ou documentos fictícios no banco hospedado.
 
 ## Stack confirmada
 
@@ -39,16 +39,16 @@ npm run build
 
 ## Organização
 
-| Caminho | Responsabilidade |
-| --- | --- |
-| `app/` | Páginas, metadados e handlers autenticados |
-| `components/` | Interações de leitura, conta, comentários e painel |
-| `lib/` | Domínio, consultas limitadas, autorização e validação |
-| `utils/supabase/` | Clientes público, navegador, sessão e privilegiado separados |
-| `data/dossiers.ts` | Dossiês originais, mantidos estáticos |
-| `supabase/migrations/` | Migrações adicionais ao banco existente |
-| `tests/` | PostgreSQL isolado, autorização, uploads, CSRF e ICS |
-| `docs/` | Arquitetura, operação, implantação, verificação e backlog |
+| Caminho                | Responsabilidade                                             |
+| ---------------------- | ------------------------------------------------------------ |
+| `app/`                 | Páginas, metadados e handlers autenticados                   |
+| `components/`          | Interações de leitura, conta, comentários e painel           |
+| `lib/`                 | Domínio, consultas limitadas, autorização e validação        |
+| `utils/supabase/`      | Clientes público, navegador, sessão e privilegiado separados |
+| `data/dossiers.ts`     | Dossiês originais, mantidos estáticos                        |
+| `supabase/migrations/` | Migrações adicionais ao banco existente                      |
+| `tests/`               | PostgreSQL isolado, autorização, uploads, CSRF e ICS         |
+| `docs/`                | Arquitetura, operação, implantação, verificação e backlog    |
 
 ## Documentação
 
@@ -59,4 +59,3 @@ npm run build
 - [Backlog P3](docs/BACKLOG.md)
 
 Leia também as páginas públicas de [privacidade](https://sisnoticias.vercel.app/privacidade) e [convivência](https://sisnoticias.vercel.app/convivencia). As decisões institucionais sobre participação escolar precisam ser formalizadas pela organização.
-

@@ -4,7 +4,6 @@ import { Pagination } from "@/components/Pagination";
 import { agenda } from "@/lib/agenda";
 import { formatDate } from "@/lib/domain";
 import { categoryLabels } from "@/data/news";
-import { getEditions } from "@/lib/resources";
 export const metadata = { title: "Agenda | Jornal SIS" };
 const labels: Record<string, string> = {
   scheduled: "Agendada",
@@ -18,13 +17,11 @@ export default async function Page({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const p = await searchParams;
-  const [{ sessions, total, page, requestedAt }, editions] = await Promise.all([
-    agenda(p),
-    getEditions(),
-  ]);
+  const { sessions, total, page, requestedAt } = await agenda(p);
   const params = Object.fromEntries(
     Object.entries(p).filter(
-      (x): x is [string, string] => typeof x[1] === "string",
+      (x): x is [string, string] =>
+        typeof x[1] === "string" && x[0] !== "edition",
     ),
   );
   const next = sessions.find(
@@ -61,21 +58,6 @@ export default async function Page({
             {Object.entries(categoryLabels).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Edição
-          <select
-            name="edition"
-            defaultValue={p.edition || ""}
-            className="sis-input mt-2 block"
-          >
-            <option value="">Todas</option>
-            {editions.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.title}
               </option>
             ))}
           </select>

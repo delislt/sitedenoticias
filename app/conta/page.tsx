@@ -9,7 +9,12 @@ export const metadata = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; denied?: string; error?: string }>;
+  searchParams: Promise<{
+    next?: string;
+    denied?: string;
+    error?: string;
+    confirmed?: string;
+  }>;
 }) {
   const [{ access }, settings, p] = await Promise.all([
     currentSession(),
@@ -21,7 +26,23 @@ export default async function AccountPage({
       <h1 className="font-display text-center text-4xl">
         Sua conta no Jornal SIS
       </h1>
-      {p.denied?<p role="alert" className="text-center text-gold">Sua conta não tem permissão para acessar esta área da equipe.</p>:null}{p.error?<p role="alert" className="text-center text-gold">Não foi possível confirmar o email. Use o link mais recente ou entre novamente.</p>:null}<ReaderAccount
+      {p.confirmed ? (
+        <p role="status" className="text-center text-gold">
+          Email confirmado. Entre com sua senha ou com o Google para continuar.
+        </p>
+      ) : null}
+      {p.denied ? (
+        <p role="alert" className="text-center text-gold">
+          Sua conta não tem permissão para acessar esta área da equipe.
+        </p>
+      ) : null}
+      {p.error ? (
+        <p role="alert" className="text-center text-gold">
+          Não foi possível confirmar o email. Use o link mais recente ou entre
+          novamente.
+        </p>
+      ) : null}
+      <ReaderAccount
         access={access}
         next={safeReturn(p.next)}
         registration={settings.readers_enabled}

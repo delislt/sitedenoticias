@@ -4,7 +4,7 @@
 
 1. Um administrador existente entra em **Equipe** e confere **Configurações e funções**.
 2. A escola define responsáveis pela moderação, períodos de acompanhamento, canal de atendimento e recursos, regras para participação escolar e retenção. Atualiza os textos de privacidade/convivência com o canal institucional.
-3. Confere Supabase Auth: novos usuários, confirmação de email, URLs de retorno e entrega de emails. A implantação preserva o cadastro externo fechado; não basta marcar a opção na interface se Auth continuar bloqueado.
+3. Confere Supabase Auth: novos usuários, confirmação de email, Google, URLs de retorno e entrega de emails. O cadastro está aberto; o serviço de email padrão é provisório e tem limite baixo.
 4. Atribui funções a outras contas usando o UUID informado em **Sua conta**. Nunca compartilhar senhas. Administradores não podem alterar os próprios privilégios.
 5. Em **Participação dos leitores**, confirma equipe acompanhando filas, mantém revisão prévia e abre comentários/cadastro conforme a decisão da organização.
 
@@ -12,7 +12,7 @@ Fechar comentários globalmente ou numa matéria impede novas publicações e no
 
 ## Publicar uma matéria
 
-1. Em **Matérias**, escolha **Nova matéria**, edição e comitê. Identifique o tipo: simulação, contexto, opinião ou comunicado.
+1. Em **Matérias**, escolha **Nova matéria** e o comitê. Identifique o tipo: simulação, contexto, opinião ou comunicado.
 2. Preencha título, resumo, autoria, parágrafos, tags, fontes e créditos. Para imagem nova, use o envio do painel (JPEG/PNG/WebP até 4 MiB). Capas têm recorte uniforme no card; a imagem interna mantém proporção natural.
 3. Salve como **Rascunho**. Confira na **Prévia protegida**. Jornalistas podem editar apenas seus rascunhos/revisões.
 4. Envie **Em revisão**. Editor revisa fontes, rótulo da simulação, clareza e dados pessoais; então publica.
@@ -36,16 +36,15 @@ Os limites por conta são aplicados no banco. Tentativas repetidas não podem se
 
 Em **Agenda e biblioteca**, selecione a área e crie o registro real da organização. Não há programação pré-preenchida.
 
-- **Edição:** crie uma nova edição, sem substituir a anterior. Os dossiês existentes pertencem ao SIS 2026.
-- **Sessão:** comitê, edição, início/fim em Brasília, status, resumo editorial e local. O local só é exibido quando marcado público.
+- **Sessão:** comitê, início/fim em Brasília, status, resumo editorial e local. O local só é exibido quando marcado público.
 - **Cobertura:** selecione sessão, autoria, atualização e eventual matéria completa. Resultados exigem confirmação explícita da organização. Corrija com nota, preservando histórico.
 - **Documento:** envie PDF estático validado, informe tipo/versão/responsável e público ou restrito. Resoluções publicadas exigem confirmação. PDF restrito exige conta verificada e link temporário.
 - **Aviso:** publique apenas comunicado definido pela organização.
 
-Após criar edição ou sessão, recarregue o painel para atualizar os seletores. A agenda exporta até 300 sessões da consulta; para agendas maiores, filtre por edição/comitê/dia. Os horários do ICS são convertidos para UTC, preservando o instante de Brasília.
+Após criar uma sessão, recarregue o painel para atualizar os seletores. A agenda exporta até 300 sessões da consulta; para agendas maiores, filtre por comitê ou dia. Os horários do ICS são convertidos para UTC, preservando o instante de Brasília.
 
 ## Sugestões e dados pessoais
 
 Sugestões de correção vão para a revisão editorial, em caráter privado. Corrija a matéria antes de marcar a sugestão como aceita; registre motivo para rejeição.
 
-**Sua conta** permite nome de exibição, exportação dos próprios dados e remoção de contribuições com confirmação explícita. Isso não exclui a conta de autenticação nem apaga a autoria do arquivo editorial. A exclusão integral e os recursos de moderação dependem do canal institucional definido pela escola.
+**Sua conta** permite alterar o nome de exibição, enviar/remover a foto privada do perfil, trocar ou recuperar a senha, exportar os próprios dados e remover contribuições com confirmação explícita. Isso não exclui a conta de autenticação nem apaga a autoria do arquivo editorial.

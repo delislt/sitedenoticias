@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ParticipantNav } from "@/components/ParticipantNav";
 import { Pagination } from "@/components/Pagination";
 import { currentSession } from "@/lib/auth";
-import { unwrap, getEditions } from "@/lib/resources";
+import { unwrap } from "@/lib/resources";
 import { categoryLabels } from "@/data/news";
 import { formatDate, pageNumber } from "@/lib/domain";
 export const metadata = { title: "Biblioteca de preparação | Jornal SIS" };
@@ -20,10 +20,7 @@ export default async function Page({
 }) {
   const p = await searchParams;
   const page = pageNumber(p.page);
-  const [{ db, access }, editions] = await Promise.all([
-    currentSession(),
-    getEditions(),
-  ]);
+  const { db, access } = await currentSession();
   let query = db
     .from("documents")
     .select(
@@ -36,13 +33,12 @@ export default async function Page({
   if (Object.hasOwn(categoryLabels, p.category || ""))
     query = query.eq("category", p.category);
   if (Object.hasOwn(kinds, p.kind || "")) query = query.eq("kind", p.kind);
-  if (editions.some((e) => e.id === p.edition))
-    query = query.eq("edition_id", p.edition);
   const r = await query;
   const docs = unwrap(r);
   const params = Object.fromEntries(
     Object.entries(p).filter(
-      (e): e is [string, string] => typeof e[1] === "string",
+      (e): e is [string, string] =>
+        typeof e[1] === "string" && e[0] !== "edition",
     ),
   );
   return (
@@ -80,21 +76,6 @@ export default async function Page({
             {Object.entries(kinds).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Edição
-          <select
-            className="sis-input mt-2 block"
-            name="edition"
-            defaultValue={p.edition || ""}
-          >
-            <option value="">Todas</option>
-            {editions.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.title}
               </option>
             ))}
           </select>

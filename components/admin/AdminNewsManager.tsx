@@ -325,22 +325,6 @@ export function AdminNewsManager({
                   ))}
                 </select>
               </label>
-              <label>
-                Edição
-                <select
-                  required
-                  className="sis-input mt-2 w-full"
-                  value={draft.edition_id || ""}
-                  onChange={(e) => field("edition_id", e.target.value)}
-                >
-                  <option value="">Selecione</option>
-                  {editions.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
             <label className="block">
               Autoria exibida

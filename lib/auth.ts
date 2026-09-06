@@ -24,7 +24,7 @@ export async function requireAccess(...wanted: Role[]) {
   if (!session.user)
     throw new HttpError(401, "Entre na sua conta para continuar.");
   if (!session.access.verified)
-    throw new HttpError(403, "Confirme seu email para participar.");
+    throw new HttpError(403, "Conclua o login com o código enviado por email.");
   if (wanted.length && !can(session.access, ...wanted))
     throw new HttpError(403, "Sua conta não tem permissão para esta ação.");
   return session;
@@ -34,6 +34,7 @@ export async function requireStaffPage(...wanted: Role[]) {
   const { redirect } = await import("next/navigation");
   const session = await currentSession();
   if (!session.user) redirect("/admin/login");
+  if (!session.access.verified) redirect("/conta?next=/admin");
   if (!can(session.access, ...wanted)) redirect("/conta?denied=1");
   return session;
 }

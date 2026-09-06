@@ -16,8 +16,6 @@ export async function agenda(p: Record<string, string | undefined>, size = 20) {
     .range((page - 1) * size, page * size - 1);
   if (Object.hasOwn(categoryLabels, p.category || ""))
     query = query.eq("category", p.category);
-  if (p.edition && /^[a-f0-9-]{36}$/.test(p.edition))
-    query = query.eq("edition_id", p.edition);
   if (calendarDate(p.day)) {
     const start = p.day + "T00:00:00-03:00";
     query = query

@@ -12,8 +12,10 @@ export async function GET(request: Request) {
     if (!error)
       return NextResponse.redirect(
         new URL(
-          "/conta?next=" +
-            encodeURIComponent(safeReturn(url.searchParams.get("next"))),
+          safeReturn(url.searchParams.get("next")) === "/conta/senha"
+            ? "/conta/senha"
+            : "/conta?next=" +
+                encodeURIComponent(safeReturn(url.searchParams.get("next"))),
           url.origin,
         ),
       );

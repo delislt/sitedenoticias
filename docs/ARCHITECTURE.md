@@ -8,18 +8,18 @@ As listagens buscam 12 notícias ou 20 recursos por página. A abertura de uma n
 
 ## Autorização em duas camadas
 
-O servidor valida a conta com `auth.getUser()` e consulta permissões. O Postgres valida novamente identidade, email verificado, conta não anônima e presença da sessão em `auth.sessions`. Campos editáveis em `user_metadata` não concedem acesso.
+O servidor valida a conta com `auth.getUser()` e consulta permissões. O Postgres valida novamente identidade, email confirmado, método primário senha/Google, conta não anônima e presença da sessão em `auth.sessions`. O segundo código por email fica vinculado à sessão primária, expira e não confia em campos editáveis de `user_metadata`.
 
-| Papel | Permissões |
-| --- | --- |
-| Visitante | Conteúdo publicado |
-| Leitor verificado | Próprio perfil mínimo, comentários, favoritos e sugestões privadas |
-| Jornalista | Próprios rascunhos/revisões e upload validado |
-| Editor | Revisão/publicação de matérias e recursos do SIS |
-| Moderador | Filas e decisões de comentários; sem publicação editorial automática |
-| Administrador | Configurações/funções e capacidades de operação |
+| Papel             | Permissões                                                           |
+| ----------------- | -------------------------------------------------------------------- |
+| Visitante         | Conteúdo publicado                                                   |
+| Leitor verificado | Próprio perfil mínimo, comentários, favoritos e sugestões privadas   |
+| Jornalista        | Próprios rascunhos/revisões e upload validado                        |
+| Editor            | Revisão/publicação de matérias e recursos do SIS                     |
+| Moderador         | Filas e decisões de comentários; sem publicação editorial automática |
+| Administrador     | Configurações/funções e capacidades de operação                      |
 
-As funções são cumulativas em `private.user_roles`. A administração não pode alterar os próprios privilégios. A migration preserva os três administradores legados auditados. `reader_profiles` contém apenas o nome de exibição; email não vai para a publicação.
+As funções são cumulativas em `private.user_roles`. A administração não pode alterar os próprios privilégios. A migration preserva os três administradores legados auditados. `reader_profiles` contém o nome de exibição; a foto privada usa o caminho fixo da própria conta no Storage. Email e foto não vão para comentários.
 
 Clientes não recebem grants de escrita nas tabelas. As mutações passam por RPCs autorizadas, com implementações de segurança no schema `private`, fora dos schemas expostos pela Data API. Os wrappers públicos são invokers; a implementação definer usa `search_path=''`, funções qualificadas e grants explícitos. Não expor `private` nas configurações da API.
 
@@ -29,7 +29,7 @@ Tabelas privadas têm RLS habilitada sem políticas de acesso direto, intenciona
 
 `/api/actions` aceita uma allowlist de operações, JSON limitado, sessão válida e origem confiável. A origem precisa corresponder ao site; destinos de retorno ficam restritos a caminhos locais. Não há fetch de URLs fornecidas por usuários. Fontes editoriais só aceitam HTTPS.
 
-O UUID da operação é serializado por advisory lock no Postgres, impedindo duplicação de retries em várias instâncias. Comentários mantêm o UUID ao repetir um envio sem alteração de texto. Quotas persistentes: cinco comentários por dez minutos, dez denúncias por hora, cinco sugestões por hora e quinze uploads por hora/conta. Chamadas diretas à RPC continuam sujeitas às verificações. Edições recebem a versão que a pessoa abriu; um conflito exige recarregar.
+O UUID da operação é serializado por advisory lock no Postgres, impedindo duplicação de retries em várias instâncias. Comentários mantêm o UUID ao repetir um envio sem alteração de texto. Quotas persistentes: cinco comentários por dez minutos, dez denúncias por hora, cinco sugestões por hora, quinze uploads editoriais e dez trocas de foto por hora/conta. Chamadas diretas à RPC continuam sujeitas às verificações.
 
 ## Publicação e privacidade
 

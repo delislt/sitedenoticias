@@ -15,6 +15,7 @@ export async function getEditions(): Promise<Edition[]> {
     .from("editions")
     .select("id,slug,title,year,published,version")
     .eq("published", true)
+    .eq("slug", "2026")
     .order("year", { ascending: false })
     .limit(100);
   if (error) throw databaseError(error);

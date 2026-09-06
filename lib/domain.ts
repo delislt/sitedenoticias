@@ -3,6 +3,8 @@ export type Role = (typeof roles)[number];
 export type Access = {
   user_id: string | null;
   verified?: boolean;
+  primary_valid?: boolean;
+  email_otp_verified?: boolean;
   display_name?: string | null;
   roles: Role[];
   suspended?: boolean;

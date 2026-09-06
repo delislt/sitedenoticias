@@ -5,7 +5,6 @@ import { listArticles } from "@/lib/supabase-articles";
 import { dossiers } from "@/data/dossiers";
 import { categoryLabels } from "@/data/news";
 import { pageNumber, calendarDate } from "@/lib/domain";
-import { getEditions } from "@/lib/resources";
 export const metadata = {
   title: "Busca | Jornal SIS",
   robots: { index: false, follow: true },
@@ -22,8 +21,6 @@ export default async function SearchPage({
     : "";
   const type = ["news", "dossier"].includes(p.type || "") ? p.type! : "";
   const page = pageNumber(p.page);
-  const editions = await getEditions();
-  const edition = editions.find((e) => e.id === p.edition);
   const from = calendarDate(p.from);
   const to = calendarDate(p.to);
   const end = to
@@ -37,7 +34,6 @@ export default async function SearchPage({
       : await listArticles({
           q,
           category,
-          edition: edition?.id,
           from: from ? from + "T00:00:00-03:00" : undefined,
           to: end,
           page,
@@ -54,7 +50,6 @@ export default async function SearchPage({
       : dossiers.filter(
           (d) =>
             (!category || d.slug === category) &&
-            (!edition || edition.slug === "2026") &&
             (!from ||
               from <=
                 (d.publishedAt || "").slice(6, 10) +
@@ -136,21 +131,6 @@ export default async function SearchPage({
             className="sis-input mt-2 w-full"
           />
         </label>
-        <label>
-          Edição
-          <select
-            name="edition"
-            defaultValue={edition?.id || ""}
-            className="sis-input mt-2 w-full"
-          >
-            <option value="">Todas</option>
-            {editions.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.title}
-              </option>
-            ))}
-          </select>
-        </label>
         <div className="flex items-end gap-4">
           <button className="sis-button">Buscar</button>
           <Link href="/busca" className="text-sm underline">
@@ -200,7 +180,7 @@ export default async function SearchPage({
         page={page}
         total={news.total}
         base="/busca"
-        params={{ q, category, type, from, to, edition: edition?.id || "" }}
+        params={{ q, category, type, from, to }}
       />
     </div>
   );

@@ -24,7 +24,6 @@ const schema = z
       "settings",
       "role",
       "correction.resolve",
-      "edition",
       "session",
       "update",
       "document",
@@ -47,7 +46,6 @@ export async function POST(request: Request) {
         : ["settings", "role"].includes(act)
           ? (["admin"] as const)
           : [
-                "edition",
                 "session",
                 "update",
                 "document",

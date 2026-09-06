@@ -8,7 +8,7 @@ export function ParticipantNav() {
       <Link href="/agenda">Agenda</Link>
       <Link href="/biblioteca">Biblioteca</Link>
       <Link href="/glossario">Glossário</Link>
-      <Link href="/arquivo">Arquivo por edição</Link>
+      <Link href="/arquivo">Notícias do SIS</Link>
       <Link href="/dossies">Dossiês</Link>
     </nav>
   );

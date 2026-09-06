@@ -17,9 +17,9 @@ export default function Page() {
       </p>
       <p>
         Comentários aprovados mostram nome de exibição, texto, data e eventual
-        indicação de edição. O selo de equipe depende de funções protegidas. Não
-        há mensagens privadas, ranking de estudantes ou associação automática
-        entre contas, fotos e delegações.
+        selo de equipe, que depende de funções protegidas. A foto enviada fica
+        na área privada da própria conta e pode ser removida. Não há mensagens
+        privadas, ranking de estudantes ou associação automática com delegações.
       </p>
       <h2 className="font-display text-2xl">Dados no dispositivo</h2>
       <p>

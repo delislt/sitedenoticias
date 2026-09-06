@@ -18,6 +18,12 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      "supabase/migrations/20260905214706_email_otp_access.sql",
+      "utf8",
+    ),
+  );
   const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   const admin = uid(1),
     reader = uid(4),
@@ -45,6 +51,9 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
       user
         ? JSON.stringify({
             sub: user,
+            amr: [
+              { method: "password", timestamp: Math.floor(Date.now() / 1000) },
+            ],
             session_id: uid(100 + Number(user.slice(-12))),
             user_metadata: { role: "admin" },
           })

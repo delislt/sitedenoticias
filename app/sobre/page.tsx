@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { dossiers } from "@/data/dossiers";
-import {
-  getConsolidatedTeamMembers,
-  getCoverageTeam,
-} from "@/lib/project-context";
+import { getCoverageTeam } from "@/lib/project-context";
 
 export const metadata: Metadata = {
   title: "Entenda o projeto | SIS Jornal",
@@ -21,8 +18,6 @@ const contextualLinks = [
 ];
 
 export default function AboutPage() {
-  const teamMembers = getConsolidatedTeamMembers();
-
   return (
     <div className="container-premium py-10 sm:py-14">
       <header className="mx-auto max-w-5xl border-b border-zinc-800 pb-10">
@@ -296,25 +291,6 @@ export default function AboutPage() {
             grupo coletivamente.
           </figcaption>
         </figure>
-
-        <div className="mt-8 grid gap-6 border-t border-zinc-800 pt-7 md:grid-cols-[minmax(0,0.55fr)_minmax(0,1.45fr)]">
-          <div>
-            <h3 className="font-display text-2xl text-zinc-100">
-              Integrantes confirmados
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-              Consolidação das três equipes responsáveis pela cobertura do
-              portal.
-            </p>
-          </div>
-          <ul className="grid gap-x-8 gap-y-3 text-sm text-zinc-300 sm:grid-cols-2">
-            {teamMembers.map((member) => (
-              <li key={member} className="border-b border-zinc-800 pb-3">
-                {member}
-              </li>
-            ))}
-          </ul>
-        </div>
       </section>
     </div>
   );
