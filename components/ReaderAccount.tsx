@@ -12,23 +12,26 @@ export function ReaderAccount({
   next,
   registration,
   emailVerified,
+  confirmationComplete,
 }: {
   access: Access;
   next: string;
   registration: boolean;
   emailVerified: boolean;
+  confirmationComplete: boolean;
 }) {
   const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [name, setName] = useState(access.display_name || "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [pendingVerification, setPendingVerification] = useState(false);
   useEffect(() => {
-    if (emailVerified) {
+    if (emailVerified || confirmationComplete) {
       localStorage.removeItem("sis-email-verification-pending");
       sessionStorage.removeItem("sis-pending-email");
       const timer = window.setTimeout(() => setPendingVerification(false), 0);
@@ -42,7 +45,15 @@ export function ReaderAccount({
       0,
     );
     return () => window.clearTimeout(timer);
-  }, [emailVerified]);
+  }, [emailVerified, confirmationComplete]);
+  useEffect(() => {
+    const pendingName = sessionStorage.getItem("sis-pending-display-name");
+    if (!access.verified || !pendingName) return;
+    sessionStorage.removeItem("sis-pending-display-name");
+    void command("profile", { display_name: pendingName })
+      .then(() => router.refresh())
+      .catch(() => sessionStorage.setItem("sis-pending-display-name", pendingName));
+  }, [access.verified, router]);
   function rememberPendingEmail() {
     localStorage.setItem("sis-email-verification-pending", "1");
     sessionStorage.setItem("sis-pending-email", email.trim());
@@ -78,15 +89,27 @@ export function ReaderAccount({
     try {
       const db = createClient();
       if (mode === "signup") {
+        const displayName = name.trim();
+        if (displayName.length < 2 || displayName.length > 60) {
+          setMessage("Informe um nome entre 2 e 60 caracteres.");
+          return;
+        }
+        if (password !== passwordConfirmation) {
+          setMessage("As senhas precisam ser iguais.");
+          return;
+        }
         const { data, error } = await db.auth.signUp({
           email,
           password,
           options: {
+            data: { display_name: displayName },
             emailRedirectTo:
               siteUrl + "/auth/callback?next=" + encodeURIComponent(next),
           },
         });
         if (error) throw error;
+        if (data.user?.identities?.length)
+          sessionStorage.setItem("sis-pending-display-name", displayName);
         if (!data.user?.email_confirmed_at) {
           rememberPendingEmail();
           router.push(verificationPage());
@@ -115,9 +138,18 @@ export function ReaderAccount({
         router.push("/conta?next=" + encodeURIComponent(next));
         router.refresh();
       }
-    } catch {
+    } catch (error) {
+      const details = error as { code?: string; message?: string };
+      const passwordError =
+        mode === "signup" &&
+        (details.code === "weak_password" ||
+          /password|senha/i.test(details.message || ""));
       setMessage(
-        "Não foi possível entrar. Confira os dados e tente novamente.",
+        passwordError
+          ? "Use pelo menos 6 caracteres, com letras e números."
+          : mode === "signup"
+            ? "Não foi possível criar a conta. Tente novamente."
+            : "Não foi possível entrar. Confira os dados e tente novamente.",
       );
     } finally {
       setBusy(false);
@@ -297,6 +329,20 @@ export function ReaderAccount({
             ou use seu email e senha
           </p>
           <form onSubmit={auth} className="card-border space-y-5 p-6">
+            {mode === "signup" ? (
+              <label className="block">
+                Nome de exibição
+                <input
+                  className="sis-input mt-2 w-full"
+                  autoComplete="nickname"
+                  minLength={2}
+                  maxLength={60}
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </label>
+            ) : null}
             <label className="block">
               Email
               <input
@@ -316,13 +362,33 @@ export function ReaderAccount({
                 autoComplete={
                   mode === "login" ? "current-password" : "new-password"
                 }
-                minLength={mode === "signup" ? 12 : 1}
+                minLength={mode === "signup" ? 6 : 1}
                 maxLength={128}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {mode === "signup" ? (
+                <span className="mt-2 block text-sm text-zinc-400">
+                  Use pelo menos 6 caracteres, com letras e números.
+                </span>
+              ) : null}
             </label>
+            {mode === "signup" ? (
+              <label className="block">
+                Confirme a senha
+                <input
+                  className="sis-input mt-2 w-full"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={6}
+                  maxLength={128}
+                  required
+                  value={passwordConfirmation}
+                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                />
+              </label>
+            ) : null}
             <button disabled={busy} className="sis-button">
               {busy
                 ? "Aguarde…"

@@ -43,6 +43,7 @@ for (const provider of ["google", "email"]) {
       "@/lib/resources": { getSettings: async () => ({ readers_enabled: true }) },
       "@/lib/domain": domain,
       "next/navigation": { redirect },
+      "next/headers": { cookies: async () => ({ get: () => undefined }) },
       "@/components/ReaderAccount": { ReaderAccount },
       "@/components/EmailVerification": { EmailVerification: () => null },
     };
@@ -63,13 +64,14 @@ test("unconfirmed backend state wins over provider metadata and URL flags", asyn
     "@/lib/resources": { getSettings: async () => ({ readers_enabled: true }) },
     "@/lib/domain": domain,
     "next/navigation": { redirect },
+    "next/headers": { cookies: async () => ({ get: () => undefined }) },
     "@/components/ReaderAccount": { ReaderAccount },
   }).default;
   await assert.rejects(account({ searchParams: Promise.resolve({ confirmed: "1" }) }), /redirect:\/conta\/verificar-email/);
 });
 test("required backend step-up remains enforced", () => {
   const html = renderToStaticMarkup(React.createElement(ReaderAccount, {
-    access: { ...access, verified: false }, emailVerified: true, next: "/", registration: true,
+    access: { ...access, verified: false }, emailVerified: true, confirmationComplete: false, next: "/", registration: true,
   }));
   assert.match(html, /REQUIRED_OTP/);
   assert.doesNotMatch(html, /Seu perfil/);

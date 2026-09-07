@@ -35,11 +35,20 @@ export async function POST(request: Request) {
   } finally {
     await db.auth.signOut({ scope: "local" });
   }
-  return NextResponse.redirect(
+  const response = NextResponse.redirect(
     new URL(
       confirmed ? "/conta?confirmed=1" : "/conta?error=confirmation",
       siteUrl,
     ),
     303,
   );
+  if (confirmed)
+    response.cookies.set("sis-email-confirmed", "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/conta",
+      maxAge: 300,
+    });
+  return response;
 }

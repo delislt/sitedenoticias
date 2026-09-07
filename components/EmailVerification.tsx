@@ -15,6 +15,7 @@ export function EmailVerification({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   useEffect(() => {
+    localStorage.setItem("sis-email-verification-pending", "1");
     const timer = !initialEmail
       ? window.setTimeout(
           () => setEmail(sessionStorage.getItem("sis-pending-email") || ""),

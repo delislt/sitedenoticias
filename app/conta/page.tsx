@@ -3,6 +3,7 @@ import { currentSession } from "@/lib/auth";
 import { getSettings } from "@/lib/resources";
 import { safeReturn } from "@/lib/domain";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 export const metadata = {
   title: "Sua conta | Jornal SIS",
   robots: { index: false, follow: false },
@@ -17,10 +18,11 @@ export default async function AccountPage({
     confirmed?: string;
   }>;
 }) {
-  const [session, settings, p] = await Promise.all([
+  const [session, settings, p, cookieStore] = await Promise.all([
     currentSession(),
     getSettings(),
     searchParams,
+    cookies(),
   ]);
   const next = safeReturn(p.next);
   if (session.user && !session.user.email_confirmed_at)
@@ -30,7 +32,7 @@ export default async function AccountPage({
       <h1 className="font-display text-center text-4xl">
         Sua conta no Jornal SIS
       </h1>
-      {p.confirmed === "1" && !session.user ? (
+      {p.confirmed === "1" && !session.user && cookieStore.get("sis-email-confirmed")?.value === "1" ? (
         <p role="status" className="text-center text-gold">
           Email confirmado. Entre com sua senha ou com o Google para continuar.
         </p>
@@ -51,6 +53,10 @@ export default async function AccountPage({
         next={next}
         registration={settings.readers_enabled}
         emailVerified={Boolean(session.user?.email_confirmed_at)}
+        confirmationComplete={
+          p.confirmed === "1" &&
+          cookieStore.get("sis-email-confirmed")?.value === "1"
+        }
       />
     </div>
   );
