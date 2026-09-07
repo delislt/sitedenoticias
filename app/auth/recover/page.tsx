@@ -9,7 +9,7 @@ export default async function RecoverPassword({
   searchParams: Promise<{ token_hash?: string }>;
 }) {
   const token = (await searchParams).token_hash || "";
-  const valid = /^[a-f0-9]{40,128}$/i.test(token);
+  const valid = /^[A-Za-z0-9_-]{20,512}$/.test(token);
   return (
     <div className="container-premium py-16">
       <section className="card-border mx-auto max-w-lg space-y-6 p-8">

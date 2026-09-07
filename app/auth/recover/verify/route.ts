@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       new URLSearchParams(Buffer.concat(chunks).toString("utf8")).get(
         "token_hash",
       ) || "";
-    if (!/^[a-f0-9]{40,128}$/i.test(token_hash))
+    if (!/^[A-Za-z0-9_-]{20,512}$/.test(token_hash))
       throw new Error("invalid token");
     const { error } = await db.auth.verifyOtp({ token_hash, type: "recovery" });
     confirmed = !error;

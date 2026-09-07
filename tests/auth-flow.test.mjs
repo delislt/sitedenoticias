@@ -76,3 +76,17 @@ test("required backend step-up remains enforced", () => {
   assert.match(html, /REQUIRED_OTP/);
   assert.doesNotMatch(html, /Seu perfil/);
 });
+test("email confirmation accepts Supabase URL-safe token hashes", async () => {
+  const ConfirmEmail = load("app/auth/confirm/page.tsx", {
+    "next/link": { default: (props) => React.createElement("a", props) },
+  }).default;
+  const html = renderToStaticMarkup(
+    await ConfirmEmail({
+      searchParams: Promise.resolve({
+        token_hash: "oh9xUIbE-oNJBwq-5xDrPUMzszBcEECq49CK34OJCfo",
+      }),
+    }),
+  );
+  assert.match(html, /Confirmar meu email/);
+  assert.doesNotMatch(html, /incompleto ou não é válido/);
+});
