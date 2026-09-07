@@ -15,7 +15,11 @@ export async function GET(request: Request) {
           data: { user },
           error: userError,
         } = await db.auth.getUser();
-        if (!userError && user && !user.email_confirmed_at)
+        if (userError || !user)
+          return NextResponse.redirect(
+            new URL("/conta?error=confirmation", url.origin),
+          );
+        if (!user.email_confirmed_at)
           return NextResponse.redirect(
             new URL(
               "/conta/verificar-email?next=" + encodeURIComponent(next),

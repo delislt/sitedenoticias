@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/database.test.mjs tests/email-otp.test.mjs && tsx --test tests/validation.test.ts",
+    "test": "node --test tests/database.test.mjs tests/email-otp.test.mjs tests/auth-flow.test.mjs && tsx --test tests/validation.test.ts",
     "measure": "node scripts/measure.mjs"
   },
   "dependencies": {

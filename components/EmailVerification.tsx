@@ -21,7 +21,6 @@ export function EmailVerification({
           0,
         )
       : undefined;
-    localStorage.setItem("sis-email-verification-pending", "1");
     return () => {
       if (timer !== undefined) window.clearTimeout(timer);
     };
@@ -54,19 +53,11 @@ export function EmailVerification({
       aria-labelledby="verification-title"
       className="card-border mx-auto max-w-xl space-y-6 border-gold p-6"
     >
-      <p
-        role="alert"
-        className="text-xs uppercase tracking-widest text-gold"
-      >
-        Verificação necessária
-      </p>
       <h1 id="verification-title" className="font-display text-4xl">
         Confirme seu email para continuar
       </h1>
       <p>
-        Enviamos um link de confirmação. Abra a mensagem e use o botão
-        <strong> Confirmar meu email</strong>. Esta etapa protege sua conta e
-        libera o acesso ao Jornal SIS.
+        Abra o email do cadastro e clique em <strong>Confirmar meu email</strong>.
       </p>
       <form onSubmit={resend} className="space-y-4">
         <label className="block">

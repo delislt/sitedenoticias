@@ -30,7 +30,7 @@ export default async function AccountPage({
       <h1 className="font-display text-center text-4xl">
         Sua conta no Jornal SIS
       </h1>
-      {p.confirmed ? (
+      {p.confirmed === "1" && !session.user ? (
         <p role="status" className="text-center text-gold">
           Email confirmado. Entre com sua senha ou com o Google para continuar.
         </p>
@@ -51,7 +51,6 @@ export default async function AccountPage({
         next={next}
         registration={settings.readers_enabled}
         emailVerified={Boolean(session.user?.email_confirmed_at)}
-        confirmationComplete={Boolean(p.confirmed)}
       />
     </div>
   );
