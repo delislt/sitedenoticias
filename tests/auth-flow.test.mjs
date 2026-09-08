@@ -19,6 +19,7 @@ function load(path, mocks = {}) {
     process: { env: {} },
     require: (id) => Object.hasOwn(mocks, id) ? mocks[id] : require(id),
     URL,
+    Response,
   });
   return exports;
 }
@@ -95,6 +96,46 @@ test("manual confirmation keeps the email and captcha flow", () => {
   assert.match(html, /Solicite outro e-mail de confirmação/);
   assert.match(html, /type="email"/);
   assert.match(html, /CAPTCHA/);
+});
+test("comment avatar is served only when the comment is visible", async () => {
+  const commentId = "a9771a09-d54c-4af5-b614-698843435bcf";
+  const authorId = "e3d0b34b-49a0-467b-8db8-29605f140dce";
+  let downloaded = "";
+  const route = load("app/api/comments/[id]/avatar/route.ts", {
+    "next/headers": { cookies: async () => ({}) },
+    "@/utils/supabase/server": {
+      createClient: () => ({
+        from: () => ({
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { id: commentId }, error: null }) }),
+          }),
+        }),
+      }),
+    },
+    "@/utils/supabase/privileged": {
+      privilegedClient: () => ({
+        from: () => ({
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { author_id: authorId }, error: null }) }),
+          }),
+        }),
+        storage: {
+          from: () => ({
+            download: async (path) => {
+              downloaded = path;
+              return { data: new Blob(["avatar"], { type: "image/webp" }), error: null };
+            },
+          }),
+        },
+      }),
+    },
+    "@/lib/http": { databaseError: (error) => error, failure: () => new Response(null, { status: 500 }) },
+  });
+  const response = await route.GET(new Request("https://sisnoticias.vercel.app"), {
+    params: Promise.resolve({ id: commentId }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal(downloaded, authorId + "/avatar.webp");
 });
 test("unconfirmed backend state wins over provider metadata and URL flags", async () => {
   const account = load("app/conta/page.tsx", {

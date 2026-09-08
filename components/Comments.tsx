@@ -11,6 +11,28 @@ type Result = {
   settings: Settings;
   focus: Comment | null;
 };
+function CommentAvatar({ comment }: { comment: Comment }) {
+  const [available, setAvailable] = useState(true);
+  const initial = comment.display_name.trim().charAt(0).toUpperCase() || "?";
+  return available ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/api/comments/${comment.id}/avatar`}
+      alt=""
+      width={40}
+      height={40}
+      className="h-10 w-10 shrink-0 rounded-full border border-gold object-cover"
+      onError={() => setAvailable(false)}
+    />
+  ) : (
+    <span
+      aria-hidden="true"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gold text-sm font-semibold"
+    >
+      {initial}
+    </span>
+  );
+}
 export function Comments({
   articleId,
   slug,
@@ -167,17 +189,20 @@ export function Comments({
             . Se removido, seu texto fica indisponível.
           </p>
         ) : null}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <strong>{c.display_name}</strong>
-          {c.team_badge ? (
-            <span className="text-xs text-gold">Equipe SIS</span>
-          ) : null}
-          <time className="text-xs text-zinc-400" dateTime={c.created_at}>
-            {formatDate(c.created_at)}
-          </time>
-          {c.edited_at ? (
-            <span className="text-xs text-zinc-400">Editado</span>
-          ) : null}
+        <div className="flex items-center gap-3">
+          <CommentAvatar comment={c} />
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <strong>{c.display_name}</strong>
+            {c.team_badge ? (
+              <span className="text-xs text-gold">Equipe SIS</span>
+            ) : null}
+            <time className="text-xs text-zinc-400" dateTime={c.created_at}>
+              {formatDate(c.created_at)}
+            </time>
+            {c.edited_at ? (
+              <span className="text-xs text-zinc-400">Editado</span>
+            ) : null}
+          </div>
         </div>
         {own && c.status !== "approved" ? (
           <p className="text-sm text-gold">
