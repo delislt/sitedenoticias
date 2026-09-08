@@ -33,6 +33,7 @@ const { ReaderAccount } = load("components/ReaderAccount.tsx", {
   "@/lib/domain": domain,
   "@/components/AvatarEditor": { AvatarEditor: () => null },
   "@/components/EmailSecondFactor": { EmailSecondFactor: () => React.createElement("p", null, "REQUIRED_OTP") },
+  "@/components/AuthCaptcha": { AuthCaptcha: () => React.createElement("p", null, "CAPTCHA") },
 });
 
 for (const provider of ["google", "email"]) {
@@ -48,7 +49,7 @@ for (const provider of ["google", "email"]) {
       "@/components/EmailVerification": { EmailVerification: () => null },
     };
     const account = load("app/conta/page.tsx", mocks).default;
-    const html = renderToStaticMarkup(await account({ searchParams: Promise.resolve({ confirmed: "1" }) }));
+    const html = renderToStaticMarkup(await account({ searchParams: Promise.resolve({}) }));
     assert.match(html, /Seu perfil/);
     assert.doesNotMatch(html, /Reenviar|Verificação adicional|REQUIRED_OTP|Email confirmado/);
     const verification = load("app/conta/verificar-email/page.tsx", mocks).default;
@@ -67,26 +68,35 @@ test("unconfirmed backend state wins over provider metadata and URL flags", asyn
     "next/headers": { cookies: async () => ({ get: () => undefined }) },
     "@/components/ReaderAccount": { ReaderAccount },
   }).default;
-  await assert.rejects(account({ searchParams: Promise.resolve({ confirmed: "1" }) }), /redirect:\/conta\/verificar-email/);
+  await assert.rejects(account({ searchParams: Promise.resolve({}) }), /redirect:\/conta\/verificar-email/);
 });
 test("required backend step-up remains enforced", () => {
   const html = renderToStaticMarkup(React.createElement(ReaderAccount, {
-    access: { ...access, verified: false }, emailVerified: true, confirmationComplete: false, next: "/", registration: true,
+    access: { ...access, verified: false }, emailVerified: true, next: "/", registration: true,
   }));
   assert.match(html, /REQUIRED_OTP/);
   assert.doesNotMatch(html, /Seu perfil/);
 });
-test("email confirmation accepts Supabase URL-safe token hashes", async () => {
-  const ConfirmEmail = load("app/auth/confirm/page.tsx", {
-    "next/link": { default: (props) => React.createElement("a", props) },
-  }).default;
-  const html = renderToStaticMarkup(
-    await ConfirmEmail({
-      searchParams: Promise.resolve({
-        token_hash: "oh9xUIbE-oNJBwq-5xDrPUMzszBcEECq49CK34OJCfo",
-      }),
-    }),
-  );
-  assert.match(html, /Confirmar meu email/);
-  assert.doesNotMatch(html, /incompleto ou não é válido/);
+test("email confirmation verifies the token once with the server client", async () => {
+  let calls = 0;
+  const route = load("app/auth/confirm/route.ts", {
+    "next/headers": { cookies: async () => ({}) },
+    "next/server": { NextResponse: { redirect: (url) => ({ location: String(url) }) } },
+    "@/utils/supabase/server": { createClient: () => ({ auth: {
+      verifyOtp: async (params) => {
+        calls++;
+        assert.deepEqual({ ...params }, {
+          token_hash: "oh9xUIbE-oNJBwq-5xDrPUMzszBcEECq49CK34OJCfo",
+          type: "email",
+        });
+        return { error: null };
+      },
+      getUser: async () => ({ data: { user: null } }),
+    } }) },
+    "@/lib/domain": domain,
+  });
+  const nextUrl = new URL("https://sisnoticias.vercel.app/auth/confirm?token_hash=oh9xUIbE-oNJBwq-5xDrPUMzszBcEECq49CK34OJCfo&type=email&next=%2Fconta");
+  const response = await route.GET({ nextUrl });
+  assert.equal(calls, 1);
+  assert.equal(response.location, "https://sisnoticias.vercel.app/conta");
 });

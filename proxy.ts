@@ -8,14 +8,18 @@ export async function proxy(request: NextRequest) {
     "default-src 'self'",
     "script-src 'self' 'nonce-" +
       nonce +
-      "' 'strict-dynamic'" +
+      "' 'strict-dynamic' https://js.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com" +
       (dev ? " 'unsafe-eval'" : ""),
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' blob: data: " +
       supabaseOrigin +
       " https://images.unsplash.com",
-    "connect-src 'self' " + supabaseOrigin + (dev ? " ws:" : ""),
+    "connect-src 'self' " +
+      supabaseOrigin +
+      " https://hcaptcha.com https://*.hcaptcha.com" +
+      (dev ? " ws:" : ""),
+    "frame-src https://hcaptcha.com https://*.hcaptcha.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

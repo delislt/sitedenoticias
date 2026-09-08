@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type HCaptcha from "@hcaptcha/react-hcaptcha";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -7,18 +8,17 @@ import { command } from "@/lib/client-api";
 import { type Access, can, siteUrl } from "@/lib/domain";
 import { EmailSecondFactor } from "@/components/EmailSecondFactor";
 import { AvatarEditor } from "@/components/AvatarEditor";
+import { AuthCaptcha } from "@/components/AuthCaptcha";
 export function ReaderAccount({
   access,
   next,
   registration,
   emailVerified,
-  confirmationComplete,
 }: {
   access: Access;
   next: string;
   registration: boolean;
   emailVerified: boolean;
-  confirmationComplete: boolean;
 }) {
   const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
@@ -28,10 +28,13 @@ export function ReaderAccount({
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [name, setName] = useState(access.display_name || "");
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
+  const submittingRef = useRef(false);
   const [message, setMessage] = useState("");
   const [pendingVerification, setPendingVerification] = useState(false);
   useEffect(() => {
-    if (emailVerified || confirmationComplete) {
+    if (emailVerified) {
       localStorage.removeItem("sis-email-verification-pending");
       sessionStorage.removeItem("sis-pending-email");
       const timer = window.setTimeout(() => setPendingVerification(false), 0);
@@ -45,14 +48,16 @@ export function ReaderAccount({
       0,
     );
     return () => window.clearTimeout(timer);
-  }, [emailVerified, confirmationComplete]);
+  }, [emailVerified]);
   useEffect(() => {
     const pendingName = sessionStorage.getItem("sis-pending-display-name");
     if (!access.verified || !pendingName) return;
     sessionStorage.removeItem("sis-pending-display-name");
     void command("profile", { display_name: pendingName })
       .then(() => router.refresh())
-      .catch(() => sessionStorage.setItem("sis-pending-display-name", pendingName));
+      .catch(() =>
+        sessionStorage.setItem("sis-pending-display-name", pendingName),
+      );
   }, [access.verified, router]);
   function rememberPendingEmail() {
     localStorage.setItem("sis-email-verification-pending", "1");
@@ -84,6 +89,14 @@ export function ReaderAccount({
   }
   async function auth(e: React.FormEvent) {
     e.preventDefault();
+    if (submittingRef.current) return;
+    if (!captchaToken) {
+      setMessage("Conclua a verificação de segurança.");
+      return;
+    }
+    submittingRef.current = true;
+    const currentCaptchaToken = captchaToken;
+    setCaptchaToken(null);
     setBusy(true);
     setMessage("");
     try {
@@ -104,7 +117,8 @@ export function ReaderAccount({
           options: {
             data: { display_name: displayName },
             emailRedirectTo:
-              siteUrl + "/auth/callback?next=" + encodeURIComponent(next),
+              siteUrl + "/conta?next=" + encodeURIComponent(next),
+            captchaToken: currentCaptchaToken,
           },
         });
         if (error) throw error;
@@ -122,6 +136,7 @@ export function ReaderAccount({
         const { data, error } = await db.auth.signInWithPassword({
           email,
           password,
+          options: { captchaToken: currentCaptchaToken },
         });
         if (error?.code === "email_not_confirmed") {
           rememberPendingEmail();
@@ -147,22 +162,29 @@ export function ReaderAccount({
       const emailLimit =
         details.status === 429 || details.code === "over_email_send_rate_limit";
       const emailUnavailable = details.code === "email_address_not_authorized";
+      const captchaError =
+        details.code === "captcha_failed" ||
+        /captcha|security verification/i.test(details.message || "");
       const passwordError =
         mode === "signup" &&
         (details.code === "weak_password" ||
           /password|senha/i.test(details.message || ""));
       setMessage(
-        emailLimit
-          ? "O limite temporário de emails foi atingido. Tente novamente mais tarde ou continue com o Google."
-          : emailUnavailable
-            ? "O envio de confirmação não está disponível para este email. Continue com o Google."
-            : passwordError
-          ? "Use pelo menos 6 caracteres, com letras e números."
-          : mode === "signup"
-            ? "Não foi possível criar a conta. Tente novamente."
-            : "Não foi possível entrar. Confira os dados e tente novamente.",
+        captchaError
+          ? "A verificação de segurança expirou ou não foi aceita. Tente novamente."
+          : emailLimit
+            ? "O limite temporário de emails foi atingido. Tente novamente mais tarde ou continue com o Google."
+            : emailUnavailable
+              ? "O envio de confirmação não está disponível para este email. Continue com o Google."
+              : passwordError
+                ? "Use pelo menos 6 caracteres, com letras e números."
+                : mode === "signup"
+                  ? "Não foi possível criar a conta. Tente novamente."
+                  : "Não foi possível entrar. Confira os dados e tente novamente.",
       );
     } finally {
+      captchaRef.current?.resetCaptcha();
+      submittingRef.current = false;
       setBusy(false);
     }
   }
@@ -276,7 +298,10 @@ export function ReaderAccount({
               aria-labelledby="pending-verification-title"
               className="card-border space-y-3 border-gold p-5"
             >
-              <h2 id="pending-verification-title" className="font-display text-2xl">
+              <h2
+                id="pending-verification-title"
+                className="font-display text-2xl"
+              >
                 Confirmação do cadastro
               </h2>
               <p>
@@ -295,7 +320,11 @@ export function ReaderAccount({
               type="button"
               className="account-mode-button"
               aria-pressed={mode === "login"}
-              onClick={() => setMode("login")}
+              onClick={() => {
+                setMode("login");
+                setCaptchaToken(null);
+                captchaRef.current?.resetCaptcha();
+              }}
             >
               Entrar
             </button>
@@ -304,7 +333,11 @@ export function ReaderAccount({
                 type="button"
                 className="account-mode-button"
                 aria-pressed={mode === "signup"}
-                onClick={() => setMode("signup")}
+                onClick={() => {
+                  setMode("signup");
+                  setCaptchaToken(null);
+                  captchaRef.current?.resetCaptcha();
+                }}
               >
                 Criar conta de leitor
               </button>
@@ -400,12 +433,19 @@ export function ReaderAccount({
                 />
               </label>
             ) : null}
-            <button disabled={busy} className="sis-button">
-              {busy
-                ? "Aguarde…"
-                : mode === "login"
-                  ? "Entrar"
-                  : "Criar conta"}
+            <AuthCaptcha
+              captchaRef={captchaRef}
+              onVerify={setCaptchaToken}
+              onInvalidate={(failed) => {
+                setCaptchaToken(null);
+                if (failed)
+                  setMessage(
+                    "Não foi possível carregar a verificação de segurança. Tente novamente.",
+                  );
+              }}
+            />
+            <button disabled={busy || !captchaToken} className="sis-button">
+              {busy ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}
             </button>
           </form>
           <Link href="/conta/esqueci-senha" className="block text-sm underline">
