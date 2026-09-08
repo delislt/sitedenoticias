@@ -139,13 +139,24 @@ export function ReaderAccount({
         router.refresh();
       }
     } catch (error) {
-      const details = error as { code?: string; message?: string };
+      const details = error as {
+        code?: string;
+        message?: string;
+        status?: number;
+      };
+      const emailLimit =
+        details.status === 429 || details.code === "over_email_send_rate_limit";
+      const emailUnavailable = details.code === "email_address_not_authorized";
       const passwordError =
         mode === "signup" &&
         (details.code === "weak_password" ||
           /password|senha/i.test(details.message || ""));
       setMessage(
-        passwordError
+        emailLimit
+          ? "O limite temporário de emails foi atingido. Tente novamente mais tarde ou continue com o Google."
+          : emailUnavailable
+            ? "O envio de confirmação não está disponível para este email. Continue com o Google."
+            : passwordError
           ? "Use pelo menos 6 caracteres, com letras e números."
           : mode === "signup"
             ? "Não foi possível criar a conta. Tente novamente."

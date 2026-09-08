@@ -41,9 +41,15 @@ export function EmailVerification({
       setMessage(
         "Email reenviado. Use somente a mensagem mais recente e confira também a pasta de spam.",
       );
-    } catch {
+    } catch (error) {
+      const details = error as { code?: string; status?: number };
       setMessage(
-        "Não foi possível reenviar agora. Aguarde um minuto e tente novamente.",
+        details.status === 429 ||
+          details.code === "over_email_send_rate_limit"
+          ? "O limite temporário de emails foi atingido. Tente novamente mais tarde."
+          : details.code === "email_address_not_authorized"
+            ? "O envio de confirmação não está disponível para este email."
+            : "Não foi possível reenviar agora. Aguarde um minuto e tente novamente.",
       );
     } finally {
       setBusy(false);
