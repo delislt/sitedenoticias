@@ -27,6 +27,7 @@ export function ReaderAccount({
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [name, setName] = useState(access.display_name || "");
+  const [savedName, setSavedName] = useState(access.display_name || "");
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
@@ -54,7 +55,11 @@ export function ReaderAccount({
     if (!access.verified || !pendingName) return;
     sessionStorage.removeItem("sis-pending-display-name");
     void command("profile", { display_name: pendingName })
-      .then(() => router.refresh())
+      .then(() => {
+        setName(pendingName);
+        setSavedName(pendingName);
+        router.refresh();
+      })
       .catch(() =>
         sessionStorage.setItem("sis-pending-display-name", pendingName),
       );
@@ -69,8 +74,12 @@ export function ReaderAccount({
     sessionStorage.removeItem("sis-pending-email");
     setPendingVerification(false);
   }
-  function verificationPage() {
-    return "/conta/verificar-email?next=" + encodeURIComponent(next);
+  function verificationPage(postSignup = false) {
+    return (
+      "/conta/verificar-email?next=" +
+      encodeURIComponent(next) +
+      (postSignup ? "&cadastro=1" : "")
+    );
   }
   async function google() {
     setBusy(true);
@@ -126,7 +135,7 @@ export function ReaderAccount({
           sessionStorage.setItem("sis-pending-display-name", displayName);
         if (!data.user?.email_confirmed_at) {
           rememberPendingEmail();
-          router.push(verificationPage());
+          router.push(verificationPage(true));
           return;
         }
         clearPendingEmail();
@@ -192,8 +201,12 @@ export function ReaderAccount({
     e.preventDefault();
     setBusy(true);
     try {
-      await command("profile", { display_name: name });
+      const displayName = name.trim();
+      await command("profile", { display_name: displayName });
+      setName(displayName);
+      setSavedName(displayName);
       setMessage("Nome de exibição salvo.");
+      router.refresh();
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -214,8 +227,14 @@ export function ReaderAccount({
           {access.verified ? (
             <form onSubmit={save} className="card-border space-y-4 p-5">
               <h2 className="font-display text-2xl">Seu perfil</h2>
+              <div>
+                <p className="text-sm text-zinc-400">Nome atual</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {savedName || "Nome ainda não definido"}
+                </p>
+              </div>
               <label className="block">
-                Nome de exibição
+                Alterar nome
                 <input
                   className="sis-input mt-2 w-full"
                   minLength={2}
@@ -302,16 +321,14 @@ export function ReaderAccount({
                 id="pending-verification-title"
                 className="font-display text-2xl"
               >
-                Confirmação do cadastro
+                E-mail ainda não confirmado
               </h2>
-              <p>
-                Se ainda não confirmou seu email, conclua o cadastro abaixo.
-              </p>
+              <p>Solicite um novo link para concluir seu cadastro.</p>
               <Link
                 href={verificationPage()}
                 className="sis-button inline-block"
               >
-                Reenviar ou concluir verificação
+                Solicitar novo e-mail de confirmação
               </Link>
             </section>
           ) : null}

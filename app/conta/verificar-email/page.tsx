@@ -11,7 +11,7 @@ export const metadata = {
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; cadastro?: string }>;
 }) {
   const [{ user }, params] = await Promise.all([
     currentSession(),
@@ -22,7 +22,11 @@ export default async function VerifyEmailPage({
     redirect("/conta?next=" + encodeURIComponent(next));
   return (
     <div className="container-premium py-12">
-      <EmailVerification initialEmail={user?.email || ""} next={next} />
+      <EmailVerification
+        initialEmail={user?.email || ""}
+        next={next}
+        postSignup={params.cadastro === "1"}
+      />
     </div>
   );
 }

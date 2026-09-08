@@ -32,7 +32,8 @@ export function AvatarEditor() {
   }
   return (
     <section className="card-border space-y-4 p-5">
-      <h2 className="font-display text-2xl">Sua foto</h2>
+      <h2 className="font-display text-2xl">Foto de perfil</h2>
+      <p className="text-sm text-zinc-400">Foto atual</p>
       {photo /* Authenticated image requests need the browser cookies. */ ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -52,7 +53,7 @@ export function AvatarEditor() {
         </div>
       )}
       <label className="block">
-        Escolher foto
+        Alterar foto
         <input
           className="sis-input mt-2 w-full"
           type="file"

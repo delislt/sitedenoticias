@@ -24,7 +24,13 @@ function load(path, mocks = {}) {
 }
 const domain = load("lib/domain.ts");
 const redirect = (url) => { throw new Error("redirect:" + url); };
-const access = { user_id: "reader", roles: ["reader"], verified: true, primary_valid: true };
+const access = {
+  user_id: "reader",
+  roles: ["reader"],
+  verified: true,
+  primary_valid: true,
+  display_name: "Leitor SIS",
+};
 const { ReaderAccount } = load("components/ReaderAccount.tsx", {
   "next/navigation": { useRouter: () => ({}) },
   "next/link": { default: (props) => React.createElement("a", props) },
@@ -34,6 +40,14 @@ const { ReaderAccount } = load("components/ReaderAccount.tsx", {
   "@/components/AvatarEditor": { AvatarEditor: () => null },
   "@/components/EmailSecondFactor": { EmailSecondFactor: () => React.createElement("p", null, "REQUIRED_OTP") },
   "@/components/AuthCaptcha": { AuthCaptcha: () => React.createElement("p", null, "CAPTCHA") },
+});
+const { EmailVerification } = load("components/EmailVerification.tsx", {
+  "next/link": { default: (props) => React.createElement("a", props) },
+  "@/utils/supabase/client": { createClient: () => ({}) },
+  "@/lib/domain": domain,
+  "@/components/AuthCaptcha": {
+    AuthCaptcha: () => React.createElement("p", null, "CAPTCHA"),
+  },
 });
 
 for (const provider of ["google", "email"]) {
@@ -51,11 +65,37 @@ for (const provider of ["google", "email"]) {
     const account = load("app/conta/page.tsx", mocks).default;
     const html = renderToStaticMarkup(await account({ searchParams: Promise.resolve({}) }));
     assert.match(html, /Seu perfil/);
+    assert.match(html, /Nome atual.*Leitor SIS/s);
     assert.doesNotMatch(html, /Reenviar|Verificação adicional|REQUIRED_OTP|Email confirmado/);
     const verification = load("app/conta/verificar-email/page.tsx", mocks).default;
     await assert.rejects(verification({ searchParams: Promise.resolve({}) }), /redirect:\/conta\?next=/);
   });
 }
+test("post-signup confirmation uses the current email and enforces the countdown", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(EmailVerification, {
+      initialEmail: "leitor@example.com",
+      next: "/",
+      postSignup: true,
+    }),
+  );
+  assert.match(html, /Confirme seu e-mail/);
+  assert.match(html, /leitor@example.com/);
+  assert.match(html, /Reenviar em 60s/);
+  assert.doesNotMatch(html, /type="email"/);
+});
+test("manual confirmation keeps the email and captcha flow", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(EmailVerification, {
+      initialEmail: "",
+      next: "/",
+      postSignup: false,
+    }),
+  );
+  assert.match(html, /Solicite outro e-mail de confirmação/);
+  assert.match(html, /type="email"/);
+  assert.match(html, /CAPTCHA/);
+});
 test("unconfirmed backend state wins over provider metadata and URL flags", async () => {
   const account = load("app/conta/page.tsx", {
     "@/lib/auth": { currentSession: async () => ({

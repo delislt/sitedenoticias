@@ -9,9 +9,11 @@ import { AuthCaptcha } from "@/components/AuthCaptcha";
 export function EmailVerification({
   initialEmail,
   next,
+  postSignup,
 }: {
   initialEmail: string;
   next: string;
+  postSignup: boolean;
 }) {
   const [email, setEmail] = useState(initialEmail);
   const [busy, setBusy] = useState(false);
@@ -19,6 +21,7 @@ export function EmailVerification({
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
   const submittingRef = useRef(false);
+  const [cooldown, setCooldown] = useState(postSignup ? 60 : 0);
   useEffect(() => {
     localStorage.setItem("sis-email-verification-pending", "1");
     const timer = !initialEmail
@@ -31,9 +34,22 @@ export function EmailVerification({
       if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [initialEmail]);
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = window.setTimeout(
+      () => setCooldown((seconds) => Math.max(0, seconds - 1)),
+      1000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
   async function resend(event: React.FormEvent) {
     event.preventDefault();
     if (submittingRef.current) return;
+    if (cooldown > 0) return;
+    if (!email.trim()) {
+      setMessage("Informe o email usado no cadastro.");
+      return;
+    }
     if (!captchaToken) {
       setMessage("Conclua a verificação de segurança.");
       return;
@@ -41,6 +57,7 @@ export function EmailVerification({
     submittingRef.current = true;
     const currentCaptchaToken = captchaToken;
     setCaptchaToken(null);
+    setCooldown(60);
     setBusy(true);
     setMessage("");
     try {
@@ -86,24 +103,32 @@ export function EmailVerification({
       className="card-border mx-auto max-w-xl space-y-6 border-gold p-6"
     >
       <h1 id="verification-title" className="font-display text-4xl">
-        Confirme seu email para continuar
+        {postSignup
+          ? "Confirme seu e-mail"
+          : "Solicite outro e-mail de confirmação"}
       </h1>
-      <p>
-        Abra o email do cadastro e clique em{" "}
-        <strong>Confirmar meu email</strong>.
-      </p>
+      {postSignup ? (
+        <p>
+          Enviamos o link para <strong>{email || "seu email"}</strong>. Abra a
+          mensagem e confirme o cadastro.
+        </p>
+      ) : (
+        <p>Informe o email do cadastro para receber um novo link.</p>
+      )}
       <form onSubmit={resend} className="space-y-4">
-        <label className="block">
-          Email do cadastro
-          <input
-            className="sis-input mt-2 w-full"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </label>
+        {!postSignup ? (
+          <label className="block">
+            Email do cadastro
+            <input
+              className="sis-input mt-2 w-full"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
+        ) : null}
         <AuthCaptcha
           captchaRef={captchaRef}
           onVerify={setCaptchaToken}
@@ -115,8 +140,15 @@ export function EmailVerification({
               );
           }}
         />
-        <button className="sis-button" disabled={busy || !captchaToken}>
-          {busy ? "Reenviando…" : "Reenviar email de confirmação"}
+        <button
+          className="sis-button"
+          disabled={busy || !captchaToken || cooldown > 0 || !email.trim()}
+        >
+          {busy
+            ? "Reenviando…"
+            : cooldown > 0
+              ? `Reenviar em ${cooldown}s`
+              : "Reenviar e-mail"}
         </button>
       </form>
       <p role="status" aria-live="polite" className="text-gold">
