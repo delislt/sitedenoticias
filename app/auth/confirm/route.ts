@@ -39,9 +39,11 @@ export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const rawType = request.nextUrl.searchParams.get("type");
   const type =
-    rawType && acceptedTypes.has(rawType as EmailOtpType)
-      ? (rawType as EmailOtpType)
-      : null;
+    rawType === null
+      ? "email"
+      : acceptedTypes.has(rawType as EmailOtpType)
+        ? (rawType as EmailOtpType)
+        : null;
   const fallback = type === "recovery" ? "/conta/senha" : "/conta";
   const next = destination(
     request.nextUrl.searchParams.get("next"),
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(next, request.nextUrl.origin));
     return NextResponse.redirect(
       new URL(
-        errorDestination(type, !tokenHash || !rawType ? "missing" : "invalid"),
+        errorDestination(type, !tokenHash ? "missing" : "invalid"),
         request.nextUrl.origin,
       ),
     );

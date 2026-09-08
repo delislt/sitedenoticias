@@ -77,7 +77,7 @@ test("required backend step-up remains enforced", () => {
   assert.match(html, /REQUIRED_OTP/);
   assert.doesNotMatch(html, /Seu perfil/);
 });
-test("email confirmation verifies the token once with the server client", async () => {
+test("legacy email confirmation verifies the token once with the server client", async () => {
   let calls = 0;
   const route = load("app/auth/confirm/route.ts", {
     "next/headers": { cookies: async () => ({}) },
@@ -95,7 +95,7 @@ test("email confirmation verifies the token once with the server client", async 
     } }) },
     "@/lib/domain": domain,
   });
-  const nextUrl = new URL("https://sisnoticias.vercel.app/auth/confirm?token_hash=oh9xUIbE-oNJBwq-5xDrPUMzszBcEECq49CK34OJCfo&type=email&next=%2Fconta");
+  const nextUrl = new URL("https://sisnoticias.vercel.app/auth/confirm?token_hash=oh9xUIbE-oNJBwq-5xDrPUMzszBcEECq49CK34OJCfo&next=%2Fconta");
   const response = await route.GET({ nextUrl });
   assert.equal(calls, 1);
   assert.equal(response.location, "https://sisnoticias.vercel.app/conta");
