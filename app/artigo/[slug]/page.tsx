@@ -138,12 +138,6 @@ export default async function ArticlePage({
             · Horário de Brasília
           </p>
         </div>
-        <p className="border-l-2 border-gold pl-4 text-sm text-zinc-400">
-          Conteúdo do Simulado Interno Sidarta.{" "}
-          {a.kind === "context"
-            ? "Este material oferece contexto histórico para a preparação."
-            : "A cobertura se refere a uma simulação acadêmica."}
-        </p>
         <nav
           aria-label="Contexto desta notícia"
           className="no-print flex flex-wrap gap-5 py-2 text-sm text-gold"

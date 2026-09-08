@@ -24,6 +24,12 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      "supabase/migrations/20260908120000_article_delete.sql",
+      "utf8",
+    ),
+  );
   const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   const admin = uid(1),
     reader = uid(4),
@@ -462,6 +468,82 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
         (await as(null, () => db.query("select id from media_assets"))).rows
           .length,
         0,
+      );
+    },
+  );
+  await t.test(
+    "article deletion checks ownership, confirmation and version",
+    async () => {
+      const ownDraft = await mutate(journalist, "article.save", {
+        ...draft,
+        slug: "rascunho-para-apagar",
+        title: "TESTE ISOLADO: Rascunho descartável",
+      });
+      await denied(() =>
+        mutate(reader, "article.delete", {
+          ...ownDraft,
+          confirmation: "TESTE ISOLADO: Rascunho descartável",
+        }),
+      );
+      await denied(() =>
+        mutate(journalist, "article.delete", {
+          ...ownDraft,
+          confirmation: "Título incorreto",
+        }),
+      );
+      const deleteOperation = crypto.randomUUID();
+      const deleted = await mutate(
+        journalist,
+        "article.delete",
+        {
+          ...ownDraft,
+          confirmation: "TESTE ISOLADO: Rascunho descartável",
+        },
+        deleteOperation,
+      );
+      assert.deepEqual(
+        deleted,
+        await mutate(
+          journalist,
+          "article.delete",
+          {
+            ...ownDraft,
+            confirmation: "TESTE ISOLADO: Rascunho descartável",
+          },
+          deleteOperation,
+        ),
+      );
+      const target = (
+        await db.query("select id,title,version from articles where id=$1", [
+          article.id,
+        ])
+      ).rows[0];
+      await denied(() =>
+        mutate(journalist, "article.delete", {
+          ...target,
+          confirmation: target.title,
+        }),
+      );
+      await mutate(editor, "article.delete", {
+        ...target,
+        confirmation: target.title,
+      });
+      assert.equal(
+        (
+          await db.query(
+            "select count(*)::int n from comments where article_id=$1",
+            [article.id],
+          )
+        ).rows[0].n,
+        0,
+      );
+      assert.equal(
+        (
+          await db.query(
+            "select count(*)::int n from private.audit_log where action='article.delete'",
+          )
+        ).rows[0].n,
+        2,
       );
     },
   );

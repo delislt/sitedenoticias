@@ -13,6 +13,7 @@ const schema = z
   .object({
     act: z.enum([
       "article.save",
+      "article.delete",
       "comment.create",
       "comment.edit",
       "comment.remove",
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
                 "correction.resolve",
               ].includes(act)
             ? (["editor"] as const)
-            : act === "article.save"
+            : ["article.save", "article.delete"].includes(act)
               ? (["journalist", "editor"] as const)
               : [];
     const { db } = await requireAccess(...wanted);

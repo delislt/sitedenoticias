@@ -9,6 +9,7 @@ test("Email step-up binds both factors to one active session", async (t) => {
     "supabase/migrations/20260905140355_sis_foundation.sql",
     "supabase/migrations/20260905140644_sis_policy_indexes.sql",
     "supabase/migrations/20260905214706_email_otp_access.sql",
+    "supabase/migrations/20260908120000_article_delete.sql",
   ])
     await db.exec(await readFile(file, "utf8"));
   const user = "00000000-0000-4000-8000-000000000001",

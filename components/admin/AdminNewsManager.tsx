@@ -28,6 +28,7 @@ export function AdminNewsManager({
   const [message, setMessage] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
   const [history, setHistory] = useState<
     {
       id: number;
@@ -38,6 +39,7 @@ export function AdminNewsManager({
     }[]
   >([]);
   const operation = useRef<string | null>(null);
+  const deleteOperation = useRef<string | null>(null);
   const editor = can(access, "editor");
   const load = useCallback(
     async (signal?: AbortSignal) => {
@@ -90,7 +92,9 @@ export function AdminNewsManager({
     setTags(a.tags?.join(", ") || "");
     setDirty(false);
     setHistory([]);
+    setDeletePending(false);
     operation.current = null;
+    deleteOperation.current = null;
   }
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -129,6 +133,38 @@ export function AdminNewsManager({
       setMessage(
         "Matéria salva. Estado: " + statusLabels[draft.status || "draft"] + ".",
       );
+      await load();
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function removeArticle() {
+    if (!draft?.id || !draft.title || !draft.version) return;
+    setBusy(true);
+    setMessage("");
+    deleteOperation.current ||= crypto.randomUUID();
+    try {
+      await command(
+        "article.delete",
+        {
+          id: draft.id,
+          version: draft.version,
+          confirmation: draft.title,
+        },
+        deleteOperation.current,
+      );
+      setDraft(null);
+      setBody("");
+      setSources("");
+      setTags("");
+      setDirty(false);
+      setHistory([]);
+      setDeletePending(false);
+      operation.current = null;
+      deleteOperation.current = null;
+      setMessage("Matéria apagada.");
       await load();
     } catch (e) {
       setMessage((e as Error).message);
@@ -488,27 +524,71 @@ export function AdminNewsManager({
                   ))}
               </select>
             </label>
-            <button disabled={busy} className="sis-button">
-              {busy ? "Salvando…" : "Salvar matéria"}
-            </button>
-            {draft.id ? (
-              <button
-                type="button"
-                className="ml-4 underline"
-                onClick={async () => {
-                  try {
-                    setHistory(
-                      await readApi(
-                        "/api/admin/dashboard?kind=history&q=" + draft.id,
-                      ),
-                    );
-                  } catch (e) {
-                    setMessage((e as Error).message);
-                  }
-                }}
-              >
-                Histórico de alterações
+            <div className="flex flex-wrap items-center gap-3">
+              <button disabled={busy} className="sis-button">
+                {busy ? "Salvando…" : "Salvar matéria"}
               </button>
+              {draft.id ? (
+                <button
+                  type="button"
+                  className="sis-button"
+                  onClick={async () => {
+                    try {
+                      setHistory(
+                        await readApi(
+                          "/api/admin/dashboard?kind=history&q=" + draft.id,
+                        ),
+                      );
+                    } catch (e) {
+                      setMessage((e as Error).message);
+                    }
+                  }}
+                >
+                  Histórico de alterações
+                </button>
+              ) : null}
+              {draft.id &&
+              (editor ||
+                (draft.author_id === access.user_id &&
+                  ["draft", "review"].includes(draft.status || "draft"))) ? (
+                <button
+                  type="button"
+                  className="sis-button sis-button-danger"
+                  disabled={busy || dirty}
+                  onClick={() => setDeletePending(true)}
+                >
+                  Apagar matéria
+                </button>
+              ) : null}
+            </div>
+            {deletePending ? (
+              <div
+                role="alert"
+                className="space-y-3 rounded-lg border border-red-800 bg-red-950/30 p-4"
+              >
+                <p>
+                  Apagar <strong>{draft.title}</strong> permanentemente? Os
+                  comentários e favoritos vinculados também serão removidos.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="sis-button sis-button-danger"
+                    disabled={busy || dirty}
+                    onClick={() => void removeArticle()}
+                  >
+                    {busy ? "Apagando…" : "Sim, apagar definitivamente"}
+                  </button>
+                  <button
+                    type="button"
+                    className="sis-button"
+                    disabled={busy}
+                    onClick={() => setDeletePending(false)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
             ) : null}
             {history.map((h) => (
               <details key={h.id} className="border-t border-zinc-800 pt-3">
