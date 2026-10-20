@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { Pagination } from "@/components/Pagination";
+import { SisEventBanner } from "@/components/SisEventBanner";
 import { listArticles } from "@/lib/supabase-articles";
 import { pageNumber } from "@/lib/domain";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,9 @@ export default async function HomePage({
   const featured =
     page === 1 ? articles.filter((a) => a.featured).slice(0, 2) : [];
   const recent = articles.filter((a) => !featured.includes(a));
+  // This dynamic Server Component captures the request time for hydration.
+  // eslint-disable-next-line react-hooks/purity
+  const serverNow = Date.now();
   return (
     <div className="container-premium space-y-12 py-10">
       <section className="space-y-5">
@@ -27,6 +31,7 @@ export default async function HomePage({
           As vozes, os debates e os acontecimentos da nossa simulação acadêmica.
         </p>
       </section>
+      {page === 1 ? <SisEventBanner serverNow={serverNow} /> : null}
       {featured.length > 0 ? (
         <section className="space-y-5">
           <h2 className="font-display text-3xl">Destaques</h2>

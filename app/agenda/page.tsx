@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ParticipantNav } from "@/components/ParticipantNav";
 import { Pagination } from "@/components/Pagination";
+import { SisEventBanner } from "@/components/SisEventBanner";
 import { agenda } from "@/lib/agenda";
 import { formatDate } from "@/lib/domain";
 import { categoryLabels } from "@/data/news";
@@ -73,6 +74,8 @@ export default async function Page({
           Exportar agenda (ICS)
         </a>
       </form>
+      <SisEventBanner serverNow={requestedAt} agenda day={p.day} />
+      <h2 className="font-display text-3xl">Sessões por comitê</h2>
       {next ? (
         <aside className="border-l-2 border-gold pl-5">
           <p className="text-sm text-gold">
@@ -116,8 +119,8 @@ export default async function Page({
         </div>
       ) : (
         <p className="card-border p-8">
-          Nenhuma sessão publicada para estes filtros. Aguarde a programação
-          oficial.
+          Nenhuma sessão por comitê publicada para estes filtros. Consulte a
+          programação geral acima.
         </p>
       )}
       <Pagination

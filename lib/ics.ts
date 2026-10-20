@@ -6,6 +6,7 @@ type CalendarSession = {
   updated_at: string;
   status: string;
   summary?: string;
+  urlPath?: string;
 };
 const escapeText = (s: string) =>
   s
@@ -51,7 +52,7 @@ export function calendar(sessions: CalendarSession[], base: string) {
       "DTEND:" + utc(s.ends_at),
       "SUMMARY:" + escapeText("SIS · " + s.title),
       "DESCRIPTION:" + escapeText("Simulação acadêmica. " + (s.summary || "")),
-      "URL:" + base + "/sessao/" + s.id,
+      "URL:" + base + (s.urlPath || "/sessao/" + s.id),
       "STATUS:" + (s.status === "cancelled" ? "CANCELLED" : "CONFIRMED"),
       "END:VEVENT",
     );
