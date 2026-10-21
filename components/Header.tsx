@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 const navItems = [
+  { href: "/categoria/geral", label: "Comitê Geral" },
   { href: "/categoria/juridico", label: "Jurídico" },
   { href: "/categoria/csnu", label: "CSNU" },
   { href: "/categoria/historico", label: "Histórico" },

@@ -1,4 +1,5 @@
-export type Category = "juridico" | "csnu" | "historico";
+export type Committee = "juridico" | "csnu" | "historico";
+export type Category = Committee | "geral";
 
 export type Article = {
   id?: string;
@@ -15,6 +16,7 @@ export type Article = {
   tags?: string[];
   sources?: import("@/lib/domain").Source[];
   image_credit?: string;
+  image_caption?: string;
   correction_note?: string;
   comments_open?: boolean;
   edition_id?: string;
@@ -24,10 +26,15 @@ export type Article = {
   content: string[];
 };
 
-export const categoryLabels: Record<Category, string> = {
+export const committeeLabels: Record<Committee, string> = {
   juridico: "Jurídico",
   csnu: "CSNU",
   historico: "Histórico",
+};
+
+export const categoryLabels: Record<Category, string> = {
+  ...committeeLabels,
+  geral: "Comitê Geral",
 };
 
 export const articles: Article[] = [];

@@ -52,7 +52,7 @@ npm run build
 
 ## Documentação
 
-A programação geral do SIS 2026 está em `lib/sis-schedule.ts`: 23/10, das 7h30 às 13h00, e 24/10, das 7h30 às 12h00 (Brasília). O banner da página inicial e da agenda usa essas mesmas datas e muda de estado automaticamente, inclusive durante o intervalo entre os dias e após o encerramento. O relógio é sincronizado com `/api/sis-clock` a cada minuto e ao retornar à página; a contagem é atualizada a cada segundo. Os avisos seguem os horários previstos, sem depender de confirmação manual do início das atividades.
+A programação geral do SIS 2026 está em `lib/sis-schedule.ts`: 23/10, das 7h30 às 15h30, e 24/10, das 8h30 às 12h00 (Brasília). O banner da página inicial e da agenda usa essas mesmas datas e muda de estado automaticamente, inclusive durante o intervalo entre os dias e após o encerramento. O relógio é sincronizado com `/api/sis-clock` a cada minuto e ao retornar à página; a contagem é atualizada a cada segundo. Os avisos seguem os horários previstos, sem depender de confirmação manual do início das atividades.
 
 Os dois dias gerais também são exportados em ICS, respeitando o filtro de dia. O filtro por comitê exporta somente as respectivas sessões. A programação geral fica no código, pois `sessions` no Supabase representa sessões específicas de comitês; não são criadas sessões fictícias no banco.
 

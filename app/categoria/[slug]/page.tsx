@@ -27,10 +27,16 @@ export default async function CategoryPage({
         aria-label="Materiais deste comitê"
         className="flex flex-wrap gap-5 text-gold"
       >
-        <Link href={"/sobre#comite-" + slug}>Entenda este comitê</Link>
-        <Link href={"/comite/" + slug}>Ver dossiê</Link>
-        <Link href={"/agenda?category=" + slug}>Agenda</Link>
-        <Link href={"/biblioteca?category=" + slug}>Biblioteca</Link>
+        {slug === "geral" ? (
+          <Link href="/sobre">Entenda o projeto por trás das notícias</Link>
+        ) : (
+          <>
+            <Link href={"/sobre#comite-" + slug}>Entenda este comitê</Link>
+            <Link href={"/comite/" + slug}>Ver dossiê</Link>
+            <Link href={"/agenda?category=" + slug}>Agenda</Link>
+            <Link href={"/biblioteca?category=" + slug}>Biblioteca</Link>
+          </>
+        )}
       </nav>
       {articles.length ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

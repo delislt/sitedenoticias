@@ -4,7 +4,7 @@ import { Pagination } from "@/components/Pagination";
 import { SisEventBanner } from "@/components/SisEventBanner";
 import { agenda } from "@/lib/agenda";
 import { formatDate } from "@/lib/domain";
-import { categoryLabels } from "@/data/news";
+import { committeeLabels } from "@/data/news";
 export const metadata = { title: "Agenda | Jornal SIS" };
 const labels: Record<string, string> = {
   scheduled: "Agendada",
@@ -56,7 +56,7 @@ export default async function Page({
             className="sis-input mt-2 block"
           >
             <option value="">Todos</option>
-            {Object.entries(categoryLabels).map(([k, v]) => (
+            {Object.entries(committeeLabels).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
               </option>
@@ -98,8 +98,8 @@ export default async function Page({
             >
               <div>
                 <p className="text-xs text-gold">
-                  {categoryLabels[s.category as keyof typeof categoryLabels]} ·{" "}
-                  {labels[s.status]}
+                  {committeeLabels[s.category as keyof typeof committeeLabels]}{" "}
+                  · {labels[s.status]}
                 </p>
                 <Link
                   href={"/sessao/" + s.id}

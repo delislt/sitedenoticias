@@ -1,4 +1,4 @@
-import type { Category } from '@/data/news';
+import type { Committee } from '@/data/news';
 
 export type DossierSource = {
   title: string;
@@ -7,7 +7,7 @@ export type DossierSource = {
 };
 
 export type Dossier = {
-  slug: Category;
+  slug: Committee;
   committee: string;
   title: string;
   subtitle: string;
@@ -172,5 +172,5 @@ export const dossiers: Dossier[] = [
   },
 ];
 
-export const getDossierBySlug = (slug: Category) =>
+export const getDossierBySlug = (slug: string) =>
   dossiers.find((dossier) => dossier.slug === slug);

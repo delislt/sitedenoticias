@@ -1,5 +1,5 @@
 import { dossiers } from "@/data/dossiers";
-import type { Category } from "@/data/news";
+import type { Committee } from "@/data/news";
 
 type CoverageTeamMedia = {
   image: string;
@@ -9,12 +9,12 @@ type CoverageTeamMedia = {
 };
 
 export type CoverageTeam = CoverageTeamMedia & {
-  category: Category;
+  category: Committee;
   committee: string;
   members: string[];
 };
 
-const teamMedia: Record<Category, CoverageTeamMedia> = {
+const teamMedia: Record<Committee, CoverageTeamMedia> = {
   juridico: {
     image: "/images/equipes/equipe-juridico-2026.png",
     imageAlt: "Equipe responsável pela cobertura do Comitê Jurídico",
@@ -49,6 +49,6 @@ export const coverageTeams: CoverageTeam[] = dossiers.map((dossier) => ({
   ...teamMedia[dossier.slug],
 }));
 
-export function getCoverageTeam(category: Category): CoverageTeam {
+export function getCoverageTeam(category: Committee): CoverageTeam {
   return coverageTeams.find((team) => team.category === category)!;
 }

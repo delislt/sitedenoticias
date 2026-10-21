@@ -130,8 +130,9 @@ export function SisEventBanner({
             </div>
           ) : null}
           {agenda ? null : (
-            <Link href="/agenda" className="sis-button">
-              Ver agenda do SIS <span aria-hidden="true">→</span>
+            <Link href="/sobre" className="sis-button">
+              Entenda o projeto por trás das notícias{" "}
+              <span aria-hidden="true">→</span>
             </Link>
           )}
         </div>

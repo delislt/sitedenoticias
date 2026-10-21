@@ -1,7 +1,7 @@
 import "server-only";
 import { publicClient } from "@/utils/supabase/public";
 import { unwrap } from "@/lib/resources";
-import { categoryLabels } from "@/data/news";
+import { committeeLabels } from "@/data/news";
 import { pageNumber, calendarDate, type Session } from "@/lib/domain";
 export const sessionFields =
   "id,edition_id,category,title,starts_at,ends_at,status,summary,published,version,updated_at";
@@ -14,7 +14,7 @@ export async function agenda(p: Record<string, string | undefined>, size = 20) {
     .order("starts_at", { ascending: true })
     .order("id")
     .range((page - 1) * size, page * size - 1);
-  if (Object.hasOwn(categoryLabels, p.category || ""))
+  if (Object.hasOwn(committeeLabels, p.category || ""))
     query = query.eq("category", p.category);
   if (calendarDate(p.day)) {
     const start = p.day + "T00:00:00-03:00";

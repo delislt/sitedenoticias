@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { readApi, command, uploadFile } from "@/lib/client-api";
-import { categoryLabels } from "@/data/news";
+import { committeeLabels } from "@/data/news";
 type Row = Record<string, unknown> & {
   id: string;
   version: number;
@@ -15,7 +15,7 @@ type Field = {
   options?: [string, string][];
   required?: boolean;
 };
-const committees: [string, string][] = Object.entries(categoryLabels);
+const committees: [string, string][] = Object.entries(committeeLabels);
 const fields: Record<string, Field[]> = {
   session: [
     {

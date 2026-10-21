@@ -3,7 +3,7 @@ import { ParticipantNav } from "@/components/ParticipantNav";
 import { Pagination } from "@/components/Pagination";
 import { currentSession } from "@/lib/auth";
 import { unwrap } from "@/lib/resources";
-import { categoryLabels } from "@/data/news";
+import { committeeLabels } from "@/data/news";
 import { formatDate, pageNumber } from "@/lib/domain";
 export const metadata = { title: "Biblioteca de preparação | Jornal SIS" };
 const kinds: Record<string, string> = {
@@ -30,7 +30,7 @@ export default async function Page({
     .eq("published", true)
     .order("updated_at", { ascending: false })
     .range((page - 1) * 20, page * 20 - 1);
-  if (Object.hasOwn(categoryLabels, p.category || ""))
+  if (Object.hasOwn(committeeLabels, p.category || ""))
     query = query.eq("category", p.category);
   if (Object.hasOwn(kinds, p.kind || "")) query = query.eq("kind", p.kind);
   const r = await query;
@@ -58,7 +58,7 @@ export default async function Page({
             defaultValue={p.category || ""}
           >
             <option value="">Todos</option>
-            {Object.entries(categoryLabels).map(([k, v]) => (
+            {Object.entries(committeeLabels).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
               </option>

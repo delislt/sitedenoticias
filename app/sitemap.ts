@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/biblioteca",
     "/glossario",
     "/arquivo",
+    "/categoria/geral",
     ...["juridico", "csnu", "historico"].flatMap((c) => [
       "/categoria/" + c,
       "/comite/" + c,

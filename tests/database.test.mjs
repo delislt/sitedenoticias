@@ -30,6 +30,12 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      "supabase/migrations/20261021113217_general_news_image_captions.sql",
+      "utf8",
+    ),
+  );
   const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   const admin = uid(1),
     reader = uid(4),
@@ -99,6 +105,67 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
     kind: "simulation",
     tags: ["diplomacia"],
   };
+  await t.test(
+    "general news saves, publishes, searches, and preserves editable image captions",
+    async () => {
+      const created = await mutate(journalist, "article.save", {
+        ...draft,
+        slug: "cobertura-geral-teste",
+        category: "geral",
+        image_caption: "Delegados na abertura do SIS.",
+        image_credit: "Equipe de imprensa",
+      });
+      const read = async () =>
+        (
+          await db.query("select * from public.articles where id=$1", [
+            created.id,
+          ])
+        ).rows[0];
+      let row = await read();
+      assert.equal(row.category, "geral");
+      assert.equal(row.image_caption, "Delegados na abertura do SIS.");
+      assert.equal(row.image_credit, "Equipe de imprensa");
+      await denied(() =>
+        mutate(reader, "article.save", {
+          ...row,
+          image_caption: "Alteração indevida",
+        }),
+      );
+      await denied(() =>
+        mutate(journalist, "article.save", {
+          ...row,
+          image_caption: "x".repeat(1001),
+        }),
+      );
+      row = await read();
+      const { image_caption, ...legacyPayload } = row;
+      await mutate(editor, "article.save", {
+        ...legacyPayload,
+        status: "published",
+      });
+      row = await read();
+      assert.equal(row.image_caption, image_caption);
+      const publicRow = await as(null, () =>
+        db.query("select image_caption from public.articles where id=$1", [
+          created.id,
+        ]),
+      );
+      assert.equal(publicRow.rows[0].image_caption, image_caption);
+      const results = await as(null, () =>
+        db.query("select * from public.sis_search(committee => 'geral')"),
+      );
+      assert.ok(results.rows.some((item) => item.id === created.id));
+      await mutate(editor, "article.save", {
+        ...row,
+        image_caption: "Nova legenda.",
+      });
+      row = await read();
+      assert.equal(row.image_caption, "Nova legenda.");
+      await mutate(editor, "article.save", { ...row, image_caption: "" });
+      assert.equal((await read()).image_caption, "");
+      await db.query("delete from public.articles where id=$1", [created.id]);
+    },
+  );
   let article, second, comment;
   await t.test(
     "legacy administrators preserved; forged metadata gives reader no role",

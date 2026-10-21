@@ -1,6 +1,7 @@
 import { categoryLabels, type Category } from "@/data/news";
 
 const badgeStyles: Record<Category, string> = {
+  geral: "bg-gold/10 text-gold border-gold/30",
   juridico: "bg-gold/15 text-gold border-gold/40",
   csnu: "bg-wine/30 text-rose-100 border-wine/60",
   historico: "bg-zinc-700/40 text-zinc-200 border-zinc-600",

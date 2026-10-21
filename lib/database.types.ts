@@ -89,6 +89,7 @@ export type Database = {
           featured: boolean
           id: string
           image_credit: string
+          image_caption: string
           kind: string
           published_at: string | null
           reading_time: string
@@ -115,6 +116,7 @@ export type Database = {
           featured?: boolean
           id?: string
           image_credit?: string
+          image_caption?: string
           kind?: string
           published_at?: string | null
           reading_time: string
@@ -141,6 +143,7 @@ export type Database = {
           featured?: boolean
           id?: string
           image_credit?: string
+          image_caption?: string
           kind?: string
           published_at?: string | null
           reading_time?: string

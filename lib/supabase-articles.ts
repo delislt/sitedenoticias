@@ -24,6 +24,7 @@ export type DbArticle = {
   tags: string[];
   sources: Source[];
   image_credit: string;
+  image_caption: string;
   correction_note: string;
   comments_open: boolean;
   version: number;
@@ -34,7 +35,7 @@ export type DbArticle = {
 export const listFields =
   "id,slug,title,subtitle,category,author,published_at,updated_at,reading_time,cover_image,featured,kind,tags,edition_id";
 export const detailFields =
-  "id,slug,title,subtitle,category,author,published_at,updated_at,reading_time,cover_image,featured,kind,tags,edition_id,content,created_at,status,sources,image_credit,correction_note,comments_open,version,author_id";
+  "id,slug,title,subtitle,category,author,published_at,updated_at,reading_time,cover_image,featured,kind,tags,edition_id,content,created_at,status,sources,image_credit,image_caption,correction_note,comments_open,version,author_id";
 export function dbToArticle(db: DbArticle): Article {
   return {
     id: db.id,
@@ -57,6 +58,7 @@ export function dbToArticle(db: DbArticle): Article {
     tags: db.tags,
     sources: db.sources,
     image_credit: db.image_credit,
+    image_caption: db.image_caption,
     correction_note: db.correction_note,
     comments_open: db.comments_open,
     edition_id: db.edition_id,

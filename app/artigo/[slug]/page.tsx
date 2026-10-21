@@ -118,7 +118,14 @@ export default async function ArticlePage({
         ) : null}
         <div className="space-y-1 text-sm text-zinc-400">
           <p>
-            <Link href={"/sobre#comite-" + a.category} className="underline">
+            <Link
+              href={
+                a.category === "geral"
+                  ? "/sobre"
+                  : "/sobre#comite-" + a.category
+              }
+              className="underline"
+            >
               {a.author}
             </Link>{" "}
             · {a.readingTime} de leitura
@@ -143,8 +150,18 @@ export default async function ArticlePage({
           className="no-print flex flex-wrap gap-5 py-2 text-sm text-gold"
         >
           <Link href={"/categoria/" + a.category}>Mais notícias do comitê</Link>
-          <Link href={"/sobre#comite-" + a.category}>Entenda este comitê</Link>
-          <Link href={"/comite/" + a.category}>Ver dossiê</Link>
+          <Link
+            href={
+              a.category === "geral" ? "/sobre" : "/sobre#comite-" + a.category
+            }
+          >
+            {a.category === "geral"
+              ? "Entenda o projeto"
+              : "Entenda este comitê"}
+          </Link>
+          {a.category !== "geral" ? (
+            <Link href={"/comite/" + a.category}>Ver dossiê</Link>
+          ) : null}
           <Link href="/glossario">Glossário</Link>
         </nav>
         {a.coverImage ? (
@@ -156,9 +173,12 @@ export default async function ArticlePage({
               decoding="async"
               className="h-auto w-full"
             />
-            {a.image_credit ? (
-              <figcaption className="p-3 text-sm text-zinc-400">
-                Imagem: {a.image_credit}
+            {a.image_caption || a.image_credit ? (
+              <figcaption className="space-y-1 p-3 text-sm text-zinc-400">
+                {a.image_caption ? (
+                  <p className="whitespace-pre-line">{a.image_caption}</p>
+                ) : null}
+                {a.image_credit ? <p>Imagem: {a.image_credit}</p> : null}
               </figcaption>
             ) : null}
           </figure>

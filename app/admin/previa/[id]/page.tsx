@@ -30,13 +30,21 @@ export default async function Page({
         {data.author} · {formatDate(data.updated_at)}
       </p>
       {data.cover_image ? (
-        <>
+        <figure>
           <img
             src={data.cover_image}
             alt={data.title}
             className="h-auto w-full"
           />
-        </>
+          {data.image_caption || data.image_credit ? (
+            <figcaption className="space-y-1 p-3 text-sm text-zinc-400">
+              {data.image_caption ? (
+                <p className="whitespace-pre-line">{data.image_caption}</p>
+              ) : null}
+              {data.image_credit ? <p>Imagem: {data.image_credit}</p> : null}
+            </figcaption>
+          ) : null}
+        </figure>
       ) : null}
       <div className="article-content space-y-6 text-justify text-lg">
         {data.content.paragraphs.map((p: string, i: number) => (

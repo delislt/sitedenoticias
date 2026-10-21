@@ -473,6 +473,20 @@ export function AdminNewsManager({
               </div>
             ) : null}
             <label className="block">
+              Legenda da imagem
+              <textarea
+                className="sis-input mt-2 w-full"
+                maxLength={1000}
+                rows={3}
+                placeholder="Descreva o que aparece na fotografia e seu contexto."
+                value={draft.image_caption || ""}
+                onChange={(e) => field("image_caption", e.target.value)}
+              />
+              <span className="mt-1 block text-xs text-zinc-400">
+                A legenda será exibida abaixo da imagem na matéria.
+              </span>
+            </label>
+            <label className="block">
               Crédito da imagem
               <input
                 className="sis-input mt-2 w-full"

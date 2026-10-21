@@ -6,8 +6,8 @@ export const sisDays = [
     dateLabel: "23 de outubro",
     weekday: "Sexta-feira",
     starts_at: "2026-10-23T07:30:00-03:00",
-    ends_at: "2026-10-23T13:00:00-03:00",
-    hours: "7h30 às 13h00",
+    ends_at: "2026-10-23T15:30:00-03:00",
+    hours: "7h30 às 15h30",
   },
   {
     id: "sis-2026-dia-2",
@@ -15,9 +15,9 @@ export const sisDays = [
     date: "2026-10-24",
     dateLabel: "24 de outubro",
     weekday: "Sábado",
-    starts_at: "2026-10-24T07:30:00-03:00",
+    starts_at: "2026-10-24T08:30:00-03:00",
     ends_at: "2026-10-24T12:00:00-03:00",
-    hours: "7h30 às 12h00",
+    hours: "8h30 às 12h00",
   },
 ] as const;
 
@@ -43,7 +43,7 @@ export function sisStatus(now: number) {
       phase: "first-live",
       title: "O primeiro dia do SIS está acontecendo",
       description:
-        "A programação de hoje segue até as 13h00. Acompanhe as notícias da simulação.",
+        "A programação de hoje segue até as 15h30. Acompanhe as notícias da simulação.",
       nextAt: first.ends_at,
       countdownLabel: "Para o fim do primeiro dia",
     };
@@ -51,7 +51,7 @@ export function sisStatus(now: number) {
     return {
       phase: "between-days",
       title: "O primeiro dia terminou. O SIS continua em 24/10",
-      description: "O segundo dia começa às 7h30 e segue até as 12h00.",
+      description: "O segundo dia começa às 8h30 e segue até as 12h00.",
       nextAt: second.starts_at,
       countdownLabel: "Para o segundo dia",
     };
@@ -91,7 +91,7 @@ export function generalCalendarDays(
     .map((day) => ({
       ...day,
       title: `SIS 2026 · ${day.title}`,
-      updated_at: "2026-10-20T15:55:00Z",
+      updated_at: "2026-10-21T11:32:17Z",
       status: "scheduled",
       summary:
         "Programação geral do Simulado Interno Sidarta. Horários de Brasília.",
