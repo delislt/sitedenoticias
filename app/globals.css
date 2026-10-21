@@ -308,6 +308,31 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .skip-link { position: fixed; top: -100px; left: 1rem; z-index: 100; background: var(--site-bg); color: var(--site-text); padding: 1rem; }
 .skip-link:focus { top: 1rem; }
 .article-content { overflow-wrap: anywhere; }
+.article-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding: .625rem .875rem;
+  border: 1px solid var(--site-border);
+  border-radius: .5rem;
+  background: var(--site-control);
+  color: var(--site-text);
+  font-size: .875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-decoration: none;
+  text-align: center;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.article-action svg { flex-shrink: 0; }
+.article-action:hover:not(:disabled) { border-color: #b08d57; background: var(--site-control-hover); }
+.article-action[aria-pressed='true'] { border-color: #b08d57; color: var(--site-text); background: color-mix(in srgb, var(--site-control) 85%, #b08d57); }
+.article-action.article-action-whatsapp { background: #25d366; border-color: #25d366; color: #052e16; font-weight: 600; }
+.article-action.article-action-whatsapp:hover { background: #20bd5a; border-color: #20bd5a; color: #052e16; }
+.article-action-icon { width: 2.75rem; padding: .625rem; flex-shrink: 0; }
 :root[data-theme='dark'] .text-zinc-500 { color: #a1a1aa; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
 @media print { .no-print, header, footer, [aria-label='Orientação para novos visitantes'], [data-nextjs-toast] { display: none !important; } body { background: white !important; color: black !important; } .container-premium { max-width: 100%; padding: 0; } article, article * { color: black !important; background: transparent !important; box-shadow: none !important; } h1,h2,h3,figure { break-after: avoid; } img { max-height: 22cm; object-fit: contain; } a { text-decoration: none; } }
