@@ -145,7 +145,6 @@ body {
 .header-menu-link:hover,
 .header-menu-link[aria-current='page'] { background: var(--site-control-hover); }
 .header-menu-service { flex-direction: column; align-items: flex-start; gap: .125rem; }
-@media (min-width: 640px) { .header-tool.header-menu-toggle { width: auto; padding: 0 .875rem; } }
 
 .site-footer {
   border-color: var(--site-border);

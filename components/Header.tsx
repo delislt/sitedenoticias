@@ -142,11 +142,10 @@ export function Header() {
               <path d="m16 16 5 5" />
             </svg>
           </button>
-          <ThemeToggle />
           <button
             ref={menuButton}
             type="button"
-            className="header-tool header-menu-toggle gap-2"
+            className="header-tool"
             aria-label={
               panel === "menu"
                 ? "Fechar menu e serviços"
@@ -168,13 +167,8 @@ export function Header() {
               strokeWidth="1.8"
               strokeLinecap="round"
             >
-              {panel === "menu" ? (
-                <path d="m6 6 12 12M6 18 18 6" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
+              <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            <span className="hidden text-sm sm:inline">Menu</span>
           </button>
         </div>
       </div>
@@ -238,6 +232,13 @@ export function Header() {
               <span className="text-xs text-zinc-400">{i.description}</span>
             </Link>
           ))}
+          <div className="mt-2 flex items-center justify-between gap-4 border-t border-zinc-800 px-3 pb-1 pt-3">
+            <div>
+              <p className="text-sm font-medium">Aparência</p>
+              <p className="text-xs text-zinc-400">Modo claro / escuro</p>
+            </div>
+            <ThemeToggle />
+          </div>
         </nav>
       ) : null}
     </header>
