@@ -1,10 +1,11 @@
 import sharp from "sharp";
 import { PDFDocument, PDFDict, PDFName } from "pdf-lib";
 import { HttpError } from "./http";
+import { MAX_IMAGE_BYTES } from "./media-limits";
 export const MAX_FILE_BYTES = 4 * 1024 * 1024;
 export async function validateImage(bytes: Buffer) {
-  if (!bytes.length || bytes.length > MAX_FILE_BYTES)
-    throw new HttpError(413, "A imagem deve ter até 4 MB.");
+  if (!bytes.length || bytes.length > MAX_IMAGE_BYTES)
+    throw new HttpError(413, "A imagem deve ter até 15 MB.");
   try {
     const pipeline = sharp(bytes, {
       limitInputPixels: 20_000_000,
@@ -25,7 +26,7 @@ export async function validateImage(bytes: Buffer) {
       .webp({ quality: 85 })
       .timeout({ seconds: 5 })
       .toBuffer();
-    if (output.length > MAX_FILE_BYTES) throw new Error("Output too large");
+    if (output.length > MAX_IMAGE_BYTES) throw new Error("Output too large");
     return output;
   } catch {
     throw new HttpError(

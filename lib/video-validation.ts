@@ -4,7 +4,7 @@ import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "./media-limits";
 
 export function validateVideo(bytes: Buffer): Buffer {
   if (!bytes.length || bytes.length > MAX_VIDEO_BYTES)
-    throw new HttpError(413, "O vídeo deve ter até 4 MB.");
+    throw new HttpError(413, "O vídeo deve ter até 30 MB.");
   try {
     // Inspect the actual MP4 container, not the extension or browser MIME.
     if (bytes.toString("ascii", 4, 8) !== "ftyp") throw new Error("Not MP4");
@@ -89,7 +89,7 @@ export function validateVideo(bytes: Buffer): Buffer {
     if (error instanceof HttpError) throw error;
     throw new HttpError(
       400,
-      "Envie um vídeo MP4 válido (H.264, áudio AAC), com até 30 segundos e 4 MB.",
+      "Envie um vídeo MP4 válido (H.264, áudio AAC), com até 30 segundos e 30 MB.",
     );
   }
 }

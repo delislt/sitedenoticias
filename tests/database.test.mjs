@@ -37,6 +37,7 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
     ),
   );
   await db.exec(await readFile("supabase/migrations/20261023150627_article_video_uploads.sql", "utf8"));
+  await db.exec(await readFile("supabase/migrations/20261023154206_media_limit_15mb.sql", "utf8"));
   const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   const admin = uid(1),
     reader = uid(4),
@@ -617,7 +618,9 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
   );
   await t.test("video covers inherit private draft and published article visibility", async () => {
     const assetId = uid(650);
-    await db.query("insert into media_assets(id,owner_id,bucket,path,mime,bytes) values($1,$2,'sis-images','isolated-video.mp4','video/mp4',1000)", [assetId, journalist]);
+    await db.query("insert into media_assets(id,owner_id,bucket,path,mime,bytes) values($1,$2,'sis-images','isolated-video.mp4','video/mp4',15728640)", [assetId, journalist]);
+    await denied(() => db.query("insert into media_assets(id,owner_id,bucket,path,mime,bytes) values($1,$2,'sis-images','too-big.mp4','video/mp4',31457281)", [uid(651), journalist]));
+    await denied(() => db.query("insert into media_assets(id,owner_id,bucket,path,mime,bytes) values($1,$2,'sis-images','too-big.webp','image/webp',15728641)", [uid(652), journalist]));
     const video = await mutate(journalist, "article.save", { ...draft, slug: "video-isolado", cover_image: "/api/media/" + assetId });
     const visible = async (user) => (await as(user, () => db.query("select id from media_assets where id=$1", [assetId]))).rows.length;
     assert.equal(await visible(null), 0);
@@ -626,7 +629,7 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
     const row = (await db.query("select * from articles where id=$1", [video.id])).rows[0];
     await mutate(editor, "article.save", { ...row, status: "published" });
     assert.equal(await visible(null), 1);
-    assert.deepEqual((await db.query("select allowed_mime_types from storage.buckets where id='sis-images'")).rows[0].allowed_mime_types, ["image/webp", "video/mp4"]);
+    assert.deepEqual((await db.query("select allowed_mime_types from storage.buckets where id='sis-images'")).rows[0].allowed_mime_types, ["image/webp", "video/mp4", "image/jpeg", "image/png"]);
   });
   await t.test(
     "account export is scoped; erasure clears contributions; revoked sessions are rejected",

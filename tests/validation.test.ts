@@ -10,6 +10,24 @@ import {
 import { sameOrigin, boundedJson } from "../lib/http";
 import { safeReturn, readingMinutes, calendarDate } from "../lib/domain";
 import { calendar } from "../lib/ics";
+import { MAX_IMAGE_BYTES } from "../lib/media-limits";
+test("15 MB JPEG input is validated and re-encoded; larger images are rejected", async () => {
+  const jpeg = await sharp({
+    create: { width: 32, height: 24, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer();
+  const file = Buffer.concat([
+    jpeg,
+    Buffer.alloc(MAX_IMAGE_BYTES - jpeg.length),
+  ]);
+  const clean = await validateImage(file);
+  assert.equal((await sharp(clean).metadata()).format, "webp");
+  await assert.rejects(
+    validateImage(Buffer.alloc(MAX_IMAGE_BYTES + 1)),
+    /15 MB/,
+  );
+});
 test("image upload decodes and re-encodes legitimate bytes; rejects active and oversized content", async () => {
   const png = await sharp({
     create: { width: 32, height: 24, channels: 3, background: "white" },

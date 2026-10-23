@@ -8,7 +8,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const require = createRequire(import.meta.url);
-function load(path, mocks = {}) {
+function load(path, mocks = {}, env = {}) {
   const source = readFileSync(new URL("../" + path, import.meta.url), "utf8");
   const { outputText } = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
@@ -16,15 +16,87 @@ function load(path, mocks = {}) {
   const exports = {};
   runInNewContext(outputText, {
     exports,
-    process: { env: {} },
+    process: { env },
     require: (id) => Object.hasOwn(mocks, id) ? mocks[id] : require(id),
     URL,
     Response,
+    Buffer,
+    fetch,
     crypto,
     console: { error() {} },
   });
   return exports;
 }
+
+test("30 MB video and 15 MB image go directly to storage; app requests carry only small JSON", async (t) => {
+  const requests = [];
+  let uploadedFile;
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    requests.push({ url, payload: JSON.parse(init.body), bytes: init.body.length });
+    return Response.json(JSON.parse(init.body).stage === "prepare" ? { path: "owner/pending.upload", token: "test-upload-token", ticket: "test-ticket" } : { id: "video", url: "/api/media/video" });
+  });
+  const { uploadFile } = load("lib/client-api.ts", {
+    "./media-limits": { MAX_VIDEO_BYTES: 30 * 1024 * 1024, MAX_IMAGE_BYTES: 15 * 1024 * 1024 },
+    "@/utils/supabase/client": { createClient: () => ({ storage: { from: () => ({
+      uploadToSignedUrl: async (_path, _token, file) => { uploadedFile = file; return { error: null }; },
+    }) } }) },
+  });
+  const file = new File([new Uint8Array(30 * 1024 * 1024)], "video.mp4", { type: "video/mp4" });
+  const result = await uploadFile(file, "video");
+  assert.equal(result.id, "video");
+  assert.equal(uploadedFile, file);
+  assert.deepEqual(requests.map((r) => r.payload.stage), ["prepare", "finish"]);
+  assert.ok(requests.every((r) => r.bytes < 2048));
+  const image = new File([new Uint8Array(15 * 1024 * 1024)], "image.jpg", { type: "image/jpeg" });
+  await uploadFile(image, "image");
+  assert.equal(uploadedFile, image);
+  assert.equal(requests[2].payload.kind, "image");
+  assert.ok(requests.every((r) => r.bytes < 2048));
+  await assert.rejects(uploadFile(new File([new Uint8Array(30 * 1024 * 1024 + 1)], "too-big.mp4"), "video"), /30 MB/);
+  await assert.rejects(uploadFile(new File([new Uint8Array(15 * 1024 * 1024 + 1)], "too-big.jpg"), "image"), /15 MB/);
+  assert.equal(requests.length, 4);
+});
+
+test("direct-upload completion validates privately before registering the final video", async () => {
+  const owner = "22222222-2222-4222-8222-222222222222";
+  const id = "11111111-1111-4111-8111-111111111111";
+  let valid = false;
+  let registered = false;
+  let kind = "video";
+  const writes = [];
+  const storage = {
+    download: async () => ({ data: new Blob(["test video bytes"]), error: null }),
+    upload: async (path) => { writes.push(path); return { error: null }; },
+    remove: async () => ({ error: null }),
+  };
+  class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
+  const { POST } = load("app/api/upload/media/route.ts", {
+    "@/lib/auth": { requireAccess: async () => ({ user: { id: owner }, db: {} }) },
+    "@/utils/supabase/privileged": { privilegedClient: () => ({ storage: { from: () => storage }, from: () => ({
+      select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: registered ? { id } : null, error: null }) }) }) }),
+      insert: async () => { registered = true; return { error: null }; },
+    }) }) },
+    "@/lib/http": { sameOrigin() {}, boundedJson: (r) => r.json(), HttpError, databaseError: (e) => e, failure: (e) => Response.json({ error: e.message }, { status: e.status || 503 }) },
+    "@/lib/upload-ticket": { verifyUploadTicket: () => ({ id, kind }) },
+    "@/lib/video-validation": { validateVideo: (bytes) => { if (!valid) throw new HttpError(400, "30 segundos"); return bytes; } },
+    "@/lib/upload-validation": { validateImage: async () => Buffer.from("validated webp") },
+    "@/lib/media-limits": { MAX_VIDEO_BYTES: 30 * 1024 * 1024, MAX_IMAGE_BYTES: 15 * 1024 * 1024 },
+  }, { SUPABASE_SERVICE_ROLE_KEY: "isolated-test-key" });
+  const finish = () => POST(new Request("https://sisnoticias.vercel.app/api/upload/media", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stage: "finish", ticket: "test-ticket" }) }));
+  assert.equal((await finish()).status, 400);
+  assert.equal(registered, false);
+  assert.equal(writes.length, 0);
+  valid = true;
+  assert.equal((await finish()).status, 200);
+  assert.equal(registered, true);
+  assert.deepEqual(writes, [owner + "/" + id + ".mp4"]);
+  assert.equal((await finish()).status, 200);
+  assert.equal(writes.length, 1);
+  kind = "image";
+  registered = false;
+  assert.equal((await finish()).status, 200);
+  assert.equal(writes[1], owner + "/" + id + ".webp");
+});
 
 test("admin logout leaves another device's session active", async () => {
   const sessions = new Set(["this-device", "other-device"]);

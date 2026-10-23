@@ -476,8 +476,8 @@ export function AdminNewsManager({
               </label>
               <label className="block">
                 {uploadKind === "video"
-                  ? "Vídeo MP4 (H.264) · até 30 segundos e 4 MB"
-                  : "Imagem · JPEG, PNG ou WebP · até 4 MB"}
+                  ? "Vídeo MP4 (H.264) · até 30 segundos e 30 MB"
+                  : "Imagem · JPEG, PNG ou WebP · até 15 MB"}
                 <input
                   type="file"
                   accept={

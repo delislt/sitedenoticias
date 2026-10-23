@@ -84,6 +84,44 @@ export async function uploadFile(
   file: File,
   kind: "image" | "video" | "pdf" = "image",
 ) {
+  if (kind === "video" || kind === "image") {
+    const { MAX_VIDEO_BYTES, MAX_IMAGE_BYTES } = await import("./media-limits");
+    if (file.size > (kind === "image" ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES))
+      throw new Error(
+        kind === "image"
+          ? "A imagem deve ter até 15 MB."
+          : "O vídeo deve ter até 30 MB.",
+      );
+    const authorization = await requestJson<{
+      path: string;
+      token: string;
+      ticket: string;
+    }>("/api/upload/media", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "prepare", kind, bytes: file.size }),
+    });
+    const { createClient } = await import("@/utils/supabase/client");
+    const uploaded = await createClient()
+      .storage.from("sis-images")
+      .uploadToSignedUrl(authorization.path, authorization.token, file, {
+        contentType: kind === "video" ? "video/mp4" : file.type || "image/webp",
+        cacheControl: "60",
+      });
+    if (uploaded.error)
+      throw new Error(
+        "Não foi possível enviar o arquivo. Confira sua conexão e tente novamente.",
+      );
+    return requestJson<{ id: string; url: string }>(
+      "/api/upload/media",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: "finish", ticket: authorization.ticket }),
+      },
+      true,
+    );
+  }
   const form = new FormData();
   form.set("file", file);
   form.set("kind", kind);

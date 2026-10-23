@@ -2,7 +2,7 @@ import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "./media-limits";
 
 export async function validateClientVideo(file: File) {
   if (file.size > MAX_VIDEO_BYTES)
-    throw new Error("O vídeo deve ter até 4 MB.");
+    throw new Error("O vídeo deve ter até 30 MB.");
   const url = URL.createObjectURL(file);
   const video = document.createElement("video");
   video.preload = "metadata";
