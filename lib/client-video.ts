@@ -1,4 +1,4 @@
-import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "./media-limits";
+import { MAX_VIDEO_BYTES } from "./media-limits";
 
 export async function validateClientVideo(file: File) {
   if (file.size > MAX_VIDEO_BYTES)
@@ -31,12 +31,8 @@ export async function validateClientVideo(file: File) {
       };
       video.src = url;
     });
-    if (
-      !Number.isFinite(duration) ||
-      duration <= 0 ||
-      duration > MAX_VIDEO_SECONDS
-    )
-      throw new Error("O vídeo deve ter no máximo 30 segundos.");
+    if (!Number.isFinite(duration) || duration <= 0)
+      throw new Error("Não foi possível verificar a duração do vídeo. Envie um MP4 válido.");
   } finally {
     video.onloadedmetadata = null;
     video.onerror = null;

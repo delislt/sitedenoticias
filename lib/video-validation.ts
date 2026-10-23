@@ -1,6 +1,6 @@
 import { createFile, type Movie } from "mp4box";
 import { HttpError } from "./http";
-import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "./media-limits";
+import { MAX_VIDEO_BYTES } from "./media-limits";
 
 export function validateVideo(bytes: Buffer): Buffer {
   if (!bytes.length || bytes.length > MAX_VIDEO_BYTES)
@@ -35,12 +35,10 @@ export function validateVideo(bytes: Buffer): Buffer {
     if (
       durations.some(
         (seconds) =>
-          !Number.isFinite(seconds) ||
-          seconds <= 0 ||
-          seconds > MAX_VIDEO_SECONDS,
+          !Number.isFinite(seconds) || seconds <= 0,
       )
     )
-      throw new HttpError(400, "O vídeo deve ter no máximo 30 segundos.");
+      throw new Error("Invalid video duration");
     if (
       info.videoTracks.some((track) => !/^avc[13]\./.test(track.codec)) ||
       info.audioTracks.some((track) => !/^mp4a\.40\./.test(track.codec)) ||
@@ -72,24 +70,14 @@ export function validateVideo(bytes: Buffer): Buffer {
             !Number.isFinite(sample.cts),
         )
       )
-        throw new Error("Incomplete or oversized video timeline");
-      const start = samples.reduce(
-        (value, sample) => Math.min(value, sample.cts),
-        Infinity,
-      );
-      const end = samples.reduce(
-        (value, sample) => Math.max(value, sample.cts + sample.duration),
-        -Infinity,
-      );
-      if ((end - start) / track.timescale > MAX_VIDEO_SECONDS)
-        throw new HttpError(400, "O vídeo deve ter no máximo 30 segundos.");
+        throw new Error("Incomplete video timeline");
     }
     return bytes;
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError(
       400,
-      "Envie um vídeo MP4 válido (H.264, áudio AAC), com até 30 segundos e 30 MB.",
+      "Envie um vídeo MP4 válido (H.264, áudio AAC), com até 30 MB.",
     );
   }
 }

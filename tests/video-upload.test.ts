@@ -19,9 +19,10 @@ test("real MP4 at 30 seconds is accepted without altering its bytes", () => {
   assert.equal(validateVideo(bytes), bytes);
 });
 
-test("server rejects a 31-second clip even when below the size limit", () => {
+test("server accepts a clip longer than 30 seconds below the size limit", () => {
   assert.ok(clip(31).length < MAX_VIDEO_BYTES);
-  assert.throws(() => validateVideo(clip(31)), /30 segundos/);
+  const bytes = clip(31);
+  assert.equal(validateVideo(bytes), bytes);
 });
 
 test("server rejects oversized, renamed non-video and truncated MP4 files", () => {

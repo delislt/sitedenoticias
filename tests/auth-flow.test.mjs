@@ -78,7 +78,7 @@ test("direct-upload completion validates privately before registering the final 
     }) }) },
     "@/lib/http": { sameOrigin() {}, boundedJson: (r) => r.json(), HttpError, databaseError: (e) => e, failure: (e) => Response.json({ error: e.message }, { status: e.status || 503 }) },
     "@/lib/upload-ticket": { verifyUploadTicket: () => ({ id, kind }) },
-    "@/lib/video-validation": { validateVideo: (bytes) => { if (!valid) throw new HttpError(400, "30 segundos"); return bytes; } },
+    "@/lib/video-validation": { validateVideo: (bytes) => { if (!valid) throw new HttpError(400, "Vídeo inválido"); return bytes; } },
     "@/lib/upload-validation": { validateImage: async () => Buffer.from("validated webp") },
     "@/lib/media-limits": { MAX_VIDEO_BYTES: 30 * 1024 * 1024, MAX_IMAGE_BYTES: 15 * 1024 * 1024 },
   }, { SUPABASE_SERVICE_ROLE_KEY: "isolated-test-key" });
