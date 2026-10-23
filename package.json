@@ -8,13 +8,14 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/database.test.mjs tests/email-otp.test.mjs tests/auth-flow.test.mjs && node --import tsx --test tests/validation.test.ts tests/sis-schedule.test.ts tests/client-api.test.ts tests/video-upload.test.ts",
+    "test": "node --test tests/database.test.mjs tests/email-otp.test.mjs tests/auth-flow.test.mjs && node --import tsx --test tests/validation.test.ts tests/sis-schedule.test.ts tests/client-api.test.ts tests/video-upload.test.ts tests/media-compression.test.ts",
     "measure": "node scripts/measure.mjs"
   },
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "2.2.0",
     "@supabase/ssr": "0.10.2",
     "@supabase/supabase-js": "2.112.4",
+    "mediabunny": "1.62.1",
     "mp4box": "2.4.1",
     "next": "16.3.4",
     "pdf-lib": "1.17.1",

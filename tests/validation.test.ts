@@ -11,6 +11,36 @@ import { sameOrigin, boundedJson } from "../lib/http";
 import { safeReturn, readingMinutes, calendarDate } from "../lib/domain";
 import { calendar } from "../lib/ics";
 import { MAX_IMAGE_BYTES } from "../lib/media-limits";
+test("large photos are resized proportionally; WebP transparency and colors survive sanitization", async () => {
+  const large = await sharp({
+    create: { width: 4000, height: 3000, channels: 3, background: "#2080b0" },
+  })
+    .jpeg()
+    .toBuffer();
+  const resized = await validateImage(large);
+  const metadata = await sharp(resized).metadata();
+  assert.equal(metadata.width, 2560);
+  assert.equal(metadata.height, 1920);
+  const webp = await sharp({
+    create: {
+      width: 32,
+      height: 24,
+      channels: 4,
+      background: { r: 40, g: 90, b: 180, alpha: 0.5 },
+    },
+  })
+    .webp({ quality: 90 })
+    .toBuffer();
+  const sanitized = await validateImage(webp);
+  const actual = await sharp(sanitized).ensureAlpha().raw().toBuffer();
+  const expected = await sharp(webp).ensureAlpha().raw().toBuffer();
+  assert.equal(actual.length, expected.length);
+  assert.ok(
+    actual.every(
+      (value: number, index: number) => Math.abs(value - expected[index]) <= 3,
+    ),
+  );
+});
 test("15 MB JPEG input is validated and re-encoded; larger images are rejected", async () => {
   const jpeg = await sharp({
     create: { width: 32, height: 24, channels: 3, background: "white" },

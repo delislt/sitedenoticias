@@ -8,6 +8,7 @@ import { can, statusLabels, kindLabels, formatDate } from "@/lib/domain";
 import { categoryLabels } from "@/data/news";
 import { ApiError, command, readApi, uploadFile } from "@/lib/client-api";
 import { validateClientVideo } from "@/lib/client-video";
+import { compressMedia } from "@/lib/client-media-compression";
 export function AdminNewsManager({
   access,
   editions,
@@ -29,6 +30,10 @@ export function AdminNewsManager({
   const [message, setMessage] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
   const [uploadKind, setUploadKind] = useState<"image" | "video">("image");
+  const [autoCompress, setAutoCompress] = useState(true);
+  const [compressionStatus, setCompressionStatus] = useState("");
+  const compressionController = useRef<AbortController | null>(null);
+  useEffect(() => () => compressionController.current?.abort(), []);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
@@ -341,6 +346,22 @@ export function AdminNewsManager({
         </aside>
         {draft ? (
           <form onSubmit={save} className="card-border p-5 sm:p-7">
+            {compressionStatus ? (
+              <div
+                className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-xl border border-[var(--site-border)] bg-[var(--site-bg)] p-4 shadow-lg"
+                role="status"
+                aria-live="polite"
+              >
+                <p className="text-sm">{compressionStatus}</p>
+                <button
+                  type="button"
+                  className="sis-button"
+                  onClick={() => compressionController.current?.abort()}
+                >
+                  Cancelar compressão
+                </button>
+              </div>
+            ) : null}
             <fieldset disabled={busy} className="min-w-0 space-y-5">
               <div className="flex flex-wrap justify-between gap-4">
                 <h2 className="font-display text-3xl">
@@ -474,10 +495,30 @@ export function AdminNewsManager({
                   <option value="video">Vídeo</option>
                 </select>
               </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={autoCompress}
+                  onChange={(e) => setAutoCompress(e.target.checked)}
+                />
+                Comprimir automaticamente em alta qualidade
+              </label>
+              <p className="text-sm text-[var(--site-muted)]">
+                Pode selecionar arquivos acima de 15 MB (imagens) ou 30 MB
+                (vídeos). O limite de tamanho só é verificado após a compressão.
+                Se o resultado continuar acima do limite, o envio será
+                bloqueado. Mantenha a compressão ativada para enviar arquivos
+                maiores.
+              </p>
+              <p className="text-sm text-[var(--site-muted)]">
+                Imagens até 2.560 px e vídeos até Full HD, preservando a
+                proporção. O original é mantido se não houver redução ou se a
+                compressão não for compatível.
+              </p>
               <label className="block">
                 {uploadKind === "video"
-                  ? "Vídeo MP4 (H.264 ou HEVC/H.265) · até 30 MB · sem limite de duração"
-                  : "Imagem · JPEG, PNG ou WebP · até 15 MB"}
+                  ? "Vídeo MP4 (H.264 ou HEVC/H.265) · até 30 MB após compressão · sem limite de duração"
+                  : "Imagem · JPEG, PNG ou WebP · até 15 MB após compressão"}
                 <input
                   type="file"
                   accept={
@@ -491,27 +532,53 @@ export function AdminNewsManager({
                     const file = e.target.files?.[0];
                     if (!file) return;
                     setBusy(true);
+                    const controller = new AbortController();
+                    compressionController.current = controller;
                     try {
+                      let prepared = file;
+                      let notice = "";
+                      if (autoCompress) {
+                        const compressed = await compressMedia(
+                          file,
+                          uploadKind,
+                          {
+                            signal: controller.signal,
+                            onProgress: setCompressionStatus,
+                          },
+                        );
+                        prepared = compressed.file;
+                        notice = compressed.notice;
+                      }
+                      controller.signal.throwIfAborted();
+                      setCompressionStatus("");
+                      setMessage("Enviando e validando o arquivo…");
                       if (uploadKind === "video")
-                        await validateClientVideo(file);
-                      const r = await uploadFile(file, uploadKind);
+                        await validateClientVideo(prepared);
+                      const r = await uploadFile(prepared, uploadKind);
                       field("cover_image", r.url);
                       field("cover_media_type", uploadKind);
                       setMessage(
-                        "Mídia validada e enviada. Ela só ficará pública com a matéria.",
+                        `${notice ? notice + " " : ""}Mídia validada e enviada. Ela só ficará pública com a matéria.`,
                       );
                     } catch (e) {
-                      setMessage((e as Error).message);
+                      setMessage(
+                        controller.signal.aborted
+                          ? "Compressão cancelada. Nenhum arquivo foi enviado."
+                          : (e as Error).message,
+                      );
                     } finally {
+                      compressionController.current = null;
+                      setCompressionStatus("");
                       setBusy(false);
+                      e.target.value = "";
                     }
                   }}
                 />
               </label>
               {uploadKind === "video" ? (
                 <p className="text-sm text-[var(--site-muted)]">
-                  A reprodução de HEVC depende do navegador e do aparelho.
-                  Para maior compatibilidade, prefira H.264.
+                  A reprodução de HEVC depende do navegador e do aparelho. Para
+                  maior compatibilidade, prefira H.264.
                 </p>
               ) : null}
               {draft.cover_image ? (

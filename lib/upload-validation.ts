@@ -23,8 +23,14 @@ export async function validateImage(bytes: Buffer) {
       throw new Error("Invalid format");
     const output = await pipeline
       .rotate()
-      .webp({ quality: 85 })
-      .timeout({ seconds: 5 })
+      .resize({
+        width: 2560,
+        height: 2560,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 90, smartSubsample: true })
+      .timeout({ seconds: 20 })
       .toBuffer();
     if (output.length > MAX_IMAGE_BYTES) throw new Error("Output too large");
     return output;
