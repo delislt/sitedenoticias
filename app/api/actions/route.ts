@@ -36,11 +36,14 @@ const schema = z
   })
   .strict();
 export async function POST(request: Request) {
+  const reference = crypto.randomUUID();
+  let action = "unknown";
   try {
     sameOrigin(request);
     const input = schema.safeParse(await boundedJson(request));
     if (!input.success) throw new HttpError(400, "Solicitação inválida.");
     const { act, data, operation } = input.data;
+    action = act;
     const wanted =
       act === "moderate"
         ? (["moderator"] as const)
@@ -81,12 +84,28 @@ export async function POST(request: Request) {
         );
     }
     const result = await db.rpc("sis_mutate", { act, d: data, operation });
-    if (result.error) throw databaseError(result.error);
+    if (result.error) {
+      console.error("action_database_error", {
+        reference,
+        action,
+        code: result.error.code,
+      });
+      throw databaseError(result.error);
+    }
     revalidatePath("/", "layout");
     return NextResponse.json(result.data, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
-    return failure(error);
+    const response = failure(error);
+    // Correlate failures without recording article text, cookies or credentials.
+    console.error("action_failed", {
+      reference,
+      action,
+      status: response.status,
+      error: error instanceof Error ? error.name : "UnknownError",
+    });
+    response.headers.set("X-Request-ID", reference);
+    return response;
   }
 }

@@ -116,24 +116,36 @@ export function AdminNewsManager({
           const n = s.indexOf("|");
           return { title: s.slice(0, n).trim(), url: s.slice(n + 1).trim() };
         });
+      const submitted = {
+        ...draft,
+        content,
+        sources: sourceList,
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      };
       const result = await command<{ id: string; version: number }>(
         "article.save",
-        {
-          ...draft,
-          content,
-          sources: sourceList,
-          tags: tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean),
-        },
+        submitted,
         operation.current,
       );
-      select(await readApi<DbArticle>("/api/admin/articles?id=" + result.id));
-      setMessage(
-        "Matéria salva. Estado: " + statusLabels[draft.status || "draft"] + ".",
-      );
-      await load();
+      // A confirmed write must not become a save failure if refreshing the list fails.
+      select({ ...submitted, ...result });
+      const success =
+        "Matéria salva. Estado: " +
+        statusLabels[submitted.status || "draft"] +
+        ".";
+      setMessage(success);
+      try {
+        await load();
+      } catch {
+        setLoadError(true);
+        setMessage(
+          success +
+            " Não foi possível atualizar a lista. Use Atualizar lista para conferir.",
+        );
+      }
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -225,6 +237,19 @@ export function AdminNewsManager({
         >
           Nova matéria
         </button>
+        <button
+          type="button"
+          disabled={busy}
+          className="sis-button"
+          onClick={() =>
+            load().catch((e) => {
+              setMessage(e.message);
+              setLoadError(true);
+            })
+          }
+        >
+          Atualizar lista
+        </button>
       </div>
       <p role="status" aria-live="polite" className="text-gold">
         {message}
@@ -296,326 +321,328 @@ export function AdminNewsManager({
           </div>
         </aside>
         {draft ? (
-          <form onSubmit={save} className="card-border space-y-5 p-5 sm:p-7">
-            <div className="flex flex-wrap justify-between gap-4">
-              <h2 className="font-display text-3xl">
-                {draft.id ? "Editar matéria" : "Novo rascunho"}
-              </h2>
-              {draft.id ? (
-                <Link
-                  className="text-gold underline"
-                  target="_blank"
-                  href={"/admin/previa/" + draft.id}
-                >
-                  Prévia protegida
-                </Link>
-              ) : null}
-            </div>
-            <label className="block">
-              Título
-              <input
-                className="sis-input mt-2 w-full"
-                required
-                minLength={5}
-                maxLength={180}
-                value={draft.title || ""}
-                onChange={(e) => field("title", e.target.value)}
-              />
-            </label>
-            <label className="block">
-              Endereço (slug)
-              <input
-                className="sis-input mt-2 w-full"
-                required
-                pattern="[a-z0-9][a-z0-9-]{0,149}"
-                maxLength={150}
-                value={draft.slug || ""}
-                onChange={(e) => field("slug", e.target.value)}
-              />
-              <span className="text-xs text-zinc-400">
-                Letras minúsculas sem acentos e hífens. Endereços antigos
-                continuarão redirecionando.
-              </span>
-            </label>
-            <label className="block">
-              Resumo
-              <textarea
-                className="sis-input mt-2 w-full"
-                maxLength={500}
-                value={draft.subtitle || ""}
-                onChange={(e) => field("subtitle", e.target.value)}
-              />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label>
-                Comitê
+          <form onSubmit={save} className="card-border p-5 sm:p-7">
+            <fieldset disabled={busy} className="min-w-0 space-y-5">
+              <div className="flex flex-wrap justify-between gap-4">
+                <h2 className="font-display text-3xl">
+                  {draft.id ? "Editar matéria" : "Novo rascunho"}
+                </h2>
+                {draft.id ? (
+                  <Link
+                    className="text-gold underline"
+                    target="_blank"
+                    href={"/admin/previa/" + draft.id}
+                  >
+                    Prévia protegida
+                  </Link>
+                ) : null}
+              </div>
+              <label className="block">
+                Título
+                <input
+                  className="sis-input mt-2 w-full"
+                  required
+                  minLength={5}
+                  maxLength={180}
+                  value={draft.title || ""}
+                  onChange={(e) => field("title", e.target.value)}
+                />
+              </label>
+              <label className="block">
+                Endereço (slug)
+                <input
+                  className="sis-input mt-2 w-full"
+                  required
+                  pattern="[a-z0-9][a-z0-9-]{0,149}"
+                  maxLength={150}
+                  value={draft.slug || ""}
+                  onChange={(e) => field("slug", e.target.value)}
+                />
+                <span className="text-xs text-zinc-400">
+                  Letras minúsculas sem acentos e hífens. Endereços antigos
+                  continuarão redirecionando.
+                </span>
+              </label>
+              <label className="block">
+                Resumo
+                <textarea
+                  className="sis-input mt-2 w-full"
+                  maxLength={500}
+                  value={draft.subtitle || ""}
+                  onChange={(e) => field("subtitle", e.target.value)}
+                />
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label>
+                  Comitê
+                  <select
+                    className="sis-input mt-2 w-full"
+                    value={draft.category}
+                    onChange={(e) => field("category", e.target.value)}
+                  >
+                    {Object.entries(categoryLabels).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="block">
+                Autoria exibida
+                <input
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  className="sis-input mt-2 w-full"
+                  value={draft.author || ""}
+                  onChange={(e) => field("author", e.target.value)}
+                />
+              </label>
+              <label className="block">
+                Tipo de conteúdo
                 <select
                   className="sis-input mt-2 w-full"
-                  value={draft.category}
-                  onChange={(e) => field("category", e.target.value)}
+                  value={draft.kind || "simulation"}
+                  onChange={(e) => field("kind", e.target.value)}
                 >
-                  {Object.entries(categoryLabels).map(([k, v]) => (
+                  {Object.entries(kindLabels).map(([k, v]) => (
                     <option key={k} value={k}>
                       {v}
                     </option>
                   ))}
                 </select>
               </label>
-            </div>
-            <label className="block">
-              Autoria exibida
-              <input
-                required
-                minLength={2}
-                maxLength={120}
-                className="sis-input mt-2 w-full"
-                value={draft.author || ""}
-                onChange={(e) => field("author", e.target.value)}
-              />
-            </label>
-            <label className="block">
-              Tipo de conteúdo
-              <select
-                className="sis-input mt-2 w-full"
-                value={draft.kind || "simulation"}
-                onChange={(e) => field("kind", e.target.value)}
-              >
-                {Object.entries(kindLabels).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              Texto da matéria
-              <textarea
-                rows={14}
-                required
-                maxLength={150000}
-                className="sis-input mt-2 w-full"
-                value={body}
-                onChange={(e) => {
-                  setBody(e.target.value);
-                  setDirty(true);
-                  operation.current = null;
-                }}
-              />
-              <span className="text-xs text-zinc-400">
-                Separe os parágrafos com uma linha em branco. Apenas texto.
-              </span>
-            </label>
-            <label className="block">
-              Tags (até 12, separadas por vírgula)
-              <input
-                className="sis-input mt-2 w-full"
-                maxLength={492}
-                value={tags}
-                onChange={(e) => {
-                  setTags(e.target.value);
-                  setDirty(true);
-                  operation.current = null;
-                }}
-              />
-            </label>
-            <label className="block">
-              Fontes (uma por linha: título | https://…)
-              <textarea
-                rows={3}
-                className="sis-input mt-2 w-full"
-                value={sources}
-                onChange={(e) => {
-                  setSources(e.target.value);
-                  setDirty(true);
-                  operation.current = null;
-                }}
-              />
-            </label>
-            <label className="block">
-              Imagem da matéria · JPEG, PNG ou WebP · até 4 MB
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="mt-2 block w-full text-sm"
-                disabled={busy}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setBusy(true);
-                  try {
-                    const r = await uploadFile(file);
-                    field("cover_image", r.url);
-                    setMessage(
-                      "Imagem validada e enviada. Ela só ficará pública com a matéria.",
-                    );
-                  } catch (e) {
-                    setMessage((e as Error).message);
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              />
-            </label>
-            {draft.cover_image ? (
-              <div className="space-y-3">
-                <img
-                  className="max-h-60 max-w-full object-contain"
-                  src={draft.cover_image}
-                  alt="Prévia da capa"
+              <label className="block">
+                Texto da matéria
+                <textarea
+                  rows={14}
+                  required
+                  maxLength={150000}
+                  className="sis-input mt-2 w-full"
+                  value={body}
+                  onChange={(e) => {
+                    setBody(e.target.value);
+                    setDirty(true);
+                    operation.current = null;
+                  }}
                 />
-                <button
-                  type="button"
-                  className="text-sm underline"
-                  onClick={() => field("cover_image", "")}
-                >
-                  Remover vínculo da capa
-                </button>
-              </div>
-            ) : null}
-            <label className="block">
-              Legenda da imagem
-              <textarea
-                className="sis-input mt-2 w-full"
-                maxLength={1000}
-                rows={3}
-                placeholder="Descreva o que aparece na fotografia e seu contexto."
-                value={draft.image_caption || ""}
-                onChange={(e) => field("image_caption", e.target.value)}
-              />
-              <span className="mt-1 block text-xs text-zinc-400">
-                A legenda será exibida abaixo da imagem na matéria.
-              </span>
-            </label>
-            <label className="block">
-              Crédito da imagem
-              <input
-                className="sis-input mt-2 w-full"
-                maxLength={300}
-                value={draft.image_credit || ""}
-                onChange={(e) => field("image_credit", e.target.value)}
-              />
-            </label>
-            <label className="block">
-              Nota pública de correção
-              <textarea
-                className="sis-input mt-2 w-full"
-                maxLength={2000}
-                value={draft.correction_note || ""}
-                onChange={(e) => field("correction_note", e.target.value)}
-              />
-            </label>
-            <div className="flex flex-wrap gap-5">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={!!draft.featured}
-                  onChange={(e) => field("featured", e.target.checked)}
-                />{" "}
-                Destaque
+                <span className="text-xs text-zinc-400">
+                  Separe os parágrafos com uma linha em branco. Apenas texto.
+                </span>
               </label>
-              <label>
+              <label className="block">
+                Tags (até 12, separadas por vírgula)
                 <input
-                  type="checkbox"
-                  checked={draft.comments_open !== false}
-                  onChange={(e) => field("comments_open", e.target.checked)}
-                />{" "}
-                Permitir comentários quando a operação global estiver aberta
+                  className="sis-input mt-2 w-full"
+                  maxLength={492}
+                  value={tags}
+                  onChange={(e) => {
+                    setTags(e.target.value);
+                    setDirty(true);
+                    operation.current = null;
+                  }}
+                />
               </label>
-            </div>
-            <label className="block">
-              Estado de publicação
-              <select
-                className="sis-input mt-2 w-full"
-                value={draft.status || "draft"}
-                onChange={(e) => field("status", e.target.value)}
-              >
-                {Object.entries(statusLabels)
-                  .filter(([k]) => editor || ["draft", "review"].includes(k))
-                  .map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <div className="flex flex-wrap items-center gap-3">
-              <button disabled={busy} className="sis-button">
-                {busy ? "Salvando…" : "Salvar matéria"}
-              </button>
-              {draft.id ? (
-                <button
-                  type="button"
-                  className="sis-button"
-                  onClick={async () => {
+              <label className="block">
+                Fontes (uma por linha: título | https://…)
+                <textarea
+                  rows={3}
+                  className="sis-input mt-2 w-full"
+                  value={sources}
+                  onChange={(e) => {
+                    setSources(e.target.value);
+                    setDirty(true);
+                    operation.current = null;
+                  }}
+                />
+              </label>
+              <label className="block">
+                Imagem da matéria · JPEG, PNG ou WebP · até 4 MB
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="mt-2 block w-full text-sm"
+                  disabled={busy}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setBusy(true);
                     try {
-                      setHistory(
-                        await readApi(
-                          "/api/admin/dashboard?kind=history&q=" + draft.id,
-                        ),
+                      const r = await uploadFile(file);
+                      field("cover_image", r.url);
+                      setMessage(
+                        "Imagem validada e enviada. Ela só ficará pública com a matéria.",
                       );
                     } catch (e) {
                       setMessage((e as Error).message);
+                    } finally {
+                      setBusy(false);
                     }
                   }}
-                >
-                  Histórico de alterações
-                </button>
+                />
+              </label>
+              {draft.cover_image ? (
+                <div className="space-y-3">
+                  <img
+                    className="max-h-60 max-w-full object-contain"
+                    src={draft.cover_image}
+                    alt="Prévia da capa"
+                  />
+                  <button
+                    type="button"
+                    className="text-sm underline"
+                    onClick={() => field("cover_image", "")}
+                  >
+                    Remover vínculo da capa
+                  </button>
+                </div>
               ) : null}
-              {draft.id &&
-              (editor ||
-                (draft.author_id === access.user_id &&
-                  ["draft", "review"].includes(draft.status || "draft"))) ? (
-                <button
-                  type="button"
-                  className="sis-button sis-button-danger"
-                  disabled={busy || dirty}
-                  onClick={() => setDeletePending(true)}
+              <label className="block">
+                Legenda da imagem
+                <textarea
+                  className="sis-input mt-2 w-full"
+                  maxLength={1000}
+                  rows={3}
+                  placeholder="Descreva o que aparece na fotografia e seu contexto."
+                  value={draft.image_caption || ""}
+                  onChange={(e) => field("image_caption", e.target.value)}
+                />
+                <span className="mt-1 block text-xs text-zinc-400">
+                  A legenda será exibida abaixo da imagem na matéria.
+                </span>
+              </label>
+              <label className="block">
+                Crédito da imagem
+                <input
+                  className="sis-input mt-2 w-full"
+                  maxLength={300}
+                  value={draft.image_credit || ""}
+                  onChange={(e) => field("image_credit", e.target.value)}
+                />
+              </label>
+              <label className="block">
+                Nota pública de correção
+                <textarea
+                  className="sis-input mt-2 w-full"
+                  maxLength={2000}
+                  value={draft.correction_note || ""}
+                  onChange={(e) => field("correction_note", e.target.value)}
+                />
+              </label>
+              <div className="flex flex-wrap gap-5">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={!!draft.featured}
+                    onChange={(e) => field("featured", e.target.checked)}
+                  />{" "}
+                  Destaque
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={draft.comments_open !== false}
+                    onChange={(e) => field("comments_open", e.target.checked)}
+                  />{" "}
+                  Permitir comentários quando a operação global estiver aberta
+                </label>
+              </div>
+              <label className="block">
+                Estado de publicação
+                <select
+                  className="sis-input mt-2 w-full"
+                  value={draft.status || "draft"}
+                  onChange={(e) => field("status", e.target.value)}
                 >
-                  Apagar matéria
+                  {Object.entries(statusLabels)
+                    .filter(([k]) => editor || ["draft", "review"].includes(k))
+                    .map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div className="flex flex-wrap items-center gap-3">
+                <button disabled={busy} className="sis-button">
+                  {busy ? "Salvando…" : "Salvar matéria"}
                 </button>
-              ) : null}
-            </div>
-            {deletePending ? (
-              <div
-                role="alert"
-                className="space-y-3 rounded-lg border border-red-800 bg-red-950/30 p-4"
-              >
-                <p>
-                  Apagar <strong>{draft.title}</strong> permanentemente? Os
-                  comentários e favoritos vinculados também serão removidos.
-                </p>
-                <div className="flex flex-wrap gap-3">
+                {draft.id ? (
+                  <button
+                    type="button"
+                    className="sis-button"
+                    onClick={async () => {
+                      try {
+                        setHistory(
+                          await readApi(
+                            "/api/admin/dashboard?kind=history&q=" + draft.id,
+                          ),
+                        );
+                      } catch (e) {
+                        setMessage((e as Error).message);
+                      }
+                    }}
+                  >
+                    Histórico de alterações
+                  </button>
+                ) : null}
+                {draft.id &&
+                (editor ||
+                  (draft.author_id === access.user_id &&
+                    ["draft", "review"].includes(draft.status || "draft"))) ? (
                   <button
                     type="button"
                     className="sis-button sis-button-danger"
                     disabled={busy || dirty}
-                    onClick={() => void removeArticle()}
+                    onClick={() => setDeletePending(true)}
                   >
-                    {busy ? "Apagando…" : "Sim, apagar definitivamente"}
+                    Apagar matéria
                   </button>
-                  <button
-                    type="button"
-                    className="sis-button"
-                    disabled={busy}
-                    onClick={() => setDeletePending(false)}
-                  >
-                    Cancelar
-                  </button>
-                </div>
+                ) : null}
               </div>
-            ) : null}
-            {history.map((h) => (
-              <details key={h.id} className="border-t border-zinc-800 pt-3">
-                <summary>
-                  Revisão {h.after_data.version} · {formatDate(h.created_at)} ·{" "}
-                  {h.actor_id}
-                </summary>
-                <p className="mt-2 font-semibold">{h.after_data.title}</p>
-                <p className="whitespace-pre-wrap text-sm">
-                  {h.after_data.content?.paragraphs.join("\n\n")}
-                </p>
-              </details>
-            ))}
+              {deletePending ? (
+                <div
+                  role="alert"
+                  className="space-y-3 rounded-lg border border-red-800 bg-red-950/30 p-4"
+                >
+                  <p>
+                    Apagar <strong>{draft.title}</strong> permanentemente? Os
+                    comentários e favoritos vinculados também serão removidos.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      className="sis-button sis-button-danger"
+                      disabled={busy || dirty}
+                      onClick={() => void removeArticle()}
+                    >
+                      {busy ? "Apagando…" : "Sim, apagar definitivamente"}
+                    </button>
+                    <button
+                      type="button"
+                      className="sis-button"
+                      disabled={busy}
+                      onClick={() => setDeletePending(false)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {history.map((h) => (
+                <details key={h.id} className="border-t border-zinc-800 pt-3">
+                  <summary>
+                    Revisão {h.after_data.version} · {formatDate(h.created_at)}{" "}
+                    · {h.actor_id}
+                  </summary>
+                  <p className="mt-2 font-semibold">{h.after_data.title}</p>
+                  <p className="whitespace-pre-wrap text-sm">
+                    {h.after_data.content?.paragraphs.join("\n\n")}
+                  </p>
+                </details>
+              ))}
+            </fieldset>
           </form>
         ) : (
           <div className="card-border p-8 text-zinc-400">
