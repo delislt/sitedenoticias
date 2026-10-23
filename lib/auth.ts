@@ -10,7 +10,7 @@ export const currentSession = cache(async () => {
     data: { user },
     error,
   } = await db.auth.getUser();
-  if (error && error.status && error.status >= 500)
+  if (error && (!error.status || error.status === 429 || error.status >= 500))
     throw new HttpError(503, "Autenticação indisponível. Tente novamente.");
   if (!user)
     return { db, user: null, access: { user_id: null, roles: [] } as Access };

@@ -61,6 +61,25 @@ export async function POST(request: Request) {
               ? (["journalist", "editor"] as const)
               : [];
     const { db } = await requireAccess(...wanted);
+    let mutation = data;
+    if (act === "article.save") {
+      // Ignore addresses sent by older forms too. Existing links stay stable;
+      // a new article gets a unique address tied to its idempotency key.
+      let slug = "noticia-" + operation;
+      if (data.id) {
+        if (!z.uuid().safeParse(data.id).success)
+          throw new HttpError(400, "ID inválido.");
+        const existing = await db
+          .from("articles")
+          .select("slug")
+          .eq("id", data.id)
+          .maybeSingle();
+        if (existing.error) throw databaseError(existing.error);
+        if (!existing.data) throw new HttpError(404, "Matéria indisponível.");
+        slug = existing.data.slug;
+      }
+      mutation = { ...data, slug };
+    }
     if (act === "settings" && data.readers_enabled === true) {
       const auth = await fetch(
         process.env.NEXT_PUBLIC_SUPABASE_URL! + "/auth/v1/settings",
@@ -83,7 +102,7 @@ export async function POST(request: Request) {
           "O cadastro está fechado no Supabase. A administração deve habilitar novos usuários em Authentication antes de abrir o formulário.",
         );
     }
-    const result = await db.rpc("sis_mutate", { act, d: data, operation });
+    const result = await db.rpc("sis_mutate", { act, d: mutation, operation });
     if (result.error) {
       console.error("action_database_error", {
         reference,

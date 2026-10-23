@@ -1,3 +1,13 @@
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function requestJson<T>(
   url: string,
   init: RequestInit,
@@ -23,9 +33,10 @@ async function requestJson<T>(
               ? "A matéria excede o tamanho permitido para envio. Reduza o texto ou as fontes."
               : "Serviço temporariamente indisponível. Tente novamente.";
         const reference = response.headers.get("X-Request-ID");
-        throw new Error(
+        throw new ApiError(
           (data?.error || fallback) +
             (reference ? " Referência: " + reference : ""),
+          response.status,
         );
       }
       if (data === null)

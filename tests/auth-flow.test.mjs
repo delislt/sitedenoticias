@@ -20,9 +20,99 @@ function load(path, mocks = {}) {
     require: (id) => Object.hasOwn(mocks, id) ? mocks[id] : require(id),
     URL,
     Response,
+    crypto,
+    console: { error() {} },
   });
   return exports;
 }
+
+test("admin logout leaves another device's session active", async () => {
+  const sessions = new Set(["this-device", "other-device"]);
+  const { LogoutButton } = load("components/admin/LogoutButton.tsx", {
+    "next/navigation": { useRouter: () => ({ push() {}, refresh() {} }) },
+    "@/utils/supabase/client": { createClient: () => ({ auth: {
+      signOut: async (options) => {
+        if (options?.scope === "local") sessions.delete("this-device");
+        else sessions.clear();
+        return { error: null };
+      },
+    } }) },
+  });
+  await LogoutButton().props.onClick();
+  assert.deepEqual([...sessions], ["other-device"]);
+});
+
+test("temporary auth failures do not masquerade as a signed-out account", async () => {
+  class HttpError extends Error {
+    constructor(status, message) { super(message); this.status = status; }
+  }
+  for (const [error, expected] of [
+    [{ status: 0, name: "AuthRetryableFetchError" }, 503],
+    [{ status: 503 }, 503],
+    [{ status: 429 }, 503],
+    [{ status: 400, name: "AuthSessionMissingError" }, 401],
+    [null, 401],
+  ]) {
+    const { requireAccess } = load("lib/auth.ts", {
+      "server-only": {},
+      react: { cache: (fn) => fn },
+      "next/headers": { cookies: async () => ({}) },
+      "@/utils/supabase/server": { createClient: () => ({ auth: {
+        getUser: async () => ({ data: { user: null }, error }),
+      } }) },
+      "@/lib/domain": {},
+      "@/lib/http": { HttpError },
+    });
+    await assert.rejects(requireAccess(), (e) => {
+      assert.equal(e.status, expected);
+      return true;
+    });
+  }
+});
+
+test("article API generates addresses, ignores invalid legacy input, and preserves existing links", async () => {
+  const calls = [];
+  let stored = { slug: "endereco-publicado" };
+  class HttpError extends Error {
+    constructor(status, message) { super(message); this.status = status; }
+  }
+  const { POST } = load("app/api/actions/route.ts", {
+    "next/cache": { revalidatePath() {} },
+    "@/lib/auth": { requireAccess: async () => ({ db: {
+      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: stored, error: null }) }) }) }),
+      rpc: async (_fn, args) => {
+        calls.push(args);
+        return { data: { id: "saved", version: 2 }, error: null };
+      },
+    } }) },
+    "@/lib/http": {
+      HttpError,
+      sameOrigin() {},
+      boundedJson: (req) => req.json(),
+      databaseError: (e) => e,
+      failure: (e) => Response.json({ error: e.message }, { status: e.status || 503 }),
+    },
+  });
+  const operation = "10000000-0000-4000-8000-000000000001";
+  const submit = (data, key = operation) => POST(new Request("https://sisnoticias.vercel.app/api/actions", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ act: "article.save", data, operation: key }),
+  }));
+  assert.equal((await submit({ title: "Nova matéria" })).status, 200);
+  assert.match(calls[0].d.slug, /^[a-z0-9][a-z0-9-]{0,149}$/);
+  assert.equal((await submit({ title: "Nova matéria", slug: "Endereço inválido!" })).status, 200);
+  assert.equal(calls[0].d.slug, calls[1].d.slug);
+  assert.equal((await submit({}, "10000000-0000-4000-8000-000000000002")).status, 200);
+  assert.notEqual(calls[0].d.slug, calls[2].d.slug);
+  const id = "20000000-0000-4000-8000-000000000001";
+  assert.equal((await submit({ id, version: 1, title: "Outro título", slug: "Tentativa de trocar" })).status, 200);
+  assert.equal(calls[3].d.slug, "endereco-publicado");
+  stored = null;
+  assert.equal((await submit({ id, version: 1 })).status, 404);
+  assert.equal((await submit({ id: "not-a-uuid" })).status, 400);
+  assert.equal(calls.length, 4);
+});
 const domain = load("lib/domain.ts");
 const redirect = (url) => { throw new Error("redirect:" + url); };
 const access = {

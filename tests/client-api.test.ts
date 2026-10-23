@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { command, readApi } from "../lib/client-api";
+import { ApiError, command, readApi } from "../lib/client-api";
 
 test("lost save response retries with the same operation and payload", async (t) => {
   const bodies: string[] = [];
@@ -25,7 +25,15 @@ test("validation, conflict and session errors are not retried", async (t) => {
     const mocked = t.mock.method(globalThis, "fetch", async () =>
       Response.json({ error: "Recusado" }, { status }),
     );
-    await assert.rejects(command("article.save", {}, "same-key"), /Recusado/);
+    await assert.rejects(
+      command("article.save", {}, "same-key"),
+      (error: unknown) => {
+        assert.ok(error instanceof ApiError);
+        assert.equal(error.status, status);
+        assert.match(error.message, /Recusado/);
+        return true;
+      },
+    );
     assert.equal(mocked.mock.callCount(), 1);
     mocked.mock.restore();
   }

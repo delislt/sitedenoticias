@@ -6,7 +6,7 @@ import type { DbArticle } from "@/lib/supabase-articles";
 import type { Access, Edition } from "@/lib/domain";
 import { can, statusLabels, kindLabels, formatDate } from "@/lib/domain";
 import { categoryLabels } from "@/data/news";
-import { command, readApi, uploadFile } from "@/lib/client-api";
+import { ApiError, command, readApi, uploadFile } from "@/lib/client-api";
 export function AdminNewsManager({
   access,
   editions,
@@ -26,6 +26,7 @@ export function AdminNewsManager({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
@@ -101,6 +102,7 @@ export function AdminNewsManager({
     if (!draft) return;
     setBusy(true);
     setMessage("");
+    setNeedsLogin(false);
     operation.current ||= crypto.randomUUID();
     try {
       const content = {
@@ -147,6 +149,7 @@ export function AdminNewsManager({
         );
       }
     } catch (e) {
+      if (e instanceof ApiError && e.status === 401) setNeedsLogin(true);
       setMessage((e as Error).message);
     } finally {
       setBusy(false);
@@ -223,7 +226,6 @@ export function AdminNewsManager({
           onClick={() =>
             select({
               title: "",
-              slug: "",
               subtitle: "",
               category: "juridico",
               author: "",
@@ -254,6 +256,20 @@ export function AdminNewsManager({
       <p role="status" aria-live="polite" className="text-gold">
         {message}
       </p>
+      {needsLogin ? (
+        <p className="card-border p-4">
+          Seu texto continua neste formulário.{" "}
+          <a
+            href="/admin/login"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gold underline"
+          >
+            Entrar novamente em outra aba
+          </a>
+          . Depois, volte a esta aba e clique em Salvar matéria.
+        </p>
+      ) : null}
       {dirty ? (
         <p className="card-border p-4 text-gold">
           Há alterações não salvas. Salve antes de trocar de matéria ou{" "}
@@ -347,21 +363,6 @@ export function AdminNewsManager({
                   value={draft.title || ""}
                   onChange={(e) => field("title", e.target.value)}
                 />
-              </label>
-              <label className="block">
-                Endereço (slug)
-                <input
-                  className="sis-input mt-2 w-full"
-                  required
-                  pattern="[a-z0-9][a-z0-9-]{0,149}"
-                  maxLength={150}
-                  value={draft.slug || ""}
-                  onChange={(e) => field("slug", e.target.value)}
-                />
-                <span className="text-xs text-zinc-400">
-                  Letras minúsculas sem acentos e hífens. Endereços antigos
-                  continuarão redirecionando.
-                </span>
               </label>
               <label className="block">
                 Resumo

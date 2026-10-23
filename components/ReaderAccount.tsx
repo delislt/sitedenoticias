@@ -300,7 +300,7 @@ export function ReaderAccount({
             ) : null}
             <button
               onClick={async () => {
-                await createClient().auth.signOut();
+                await createClient().auth.signOut({ scope: "local" });
                 router.push("/conta");
                 router.refresh();
               }}

@@ -8,7 +8,7 @@ export function LogoutButton() {
 
   async function handleLogout() {
     const supabase = createClient();
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/admin/login");
     router.refresh();
   }
