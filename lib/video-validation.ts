@@ -40,7 +40,7 @@ export function validateVideo(bytes: Buffer): Buffer {
     )
       throw new Error("Invalid video duration");
     if (
-      info.videoTracks.some((track) => !/^avc[13]\./.test(track.codec)) ||
+      info.videoTracks.some((track) => !/^(?:avc[13]|hvc1|hev1)\./.test(track.codec)) ||
       info.audioTracks.some((track) => !/^mp4a\.40\./.test(track.codec)) ||
       info.tracks.some((track) => !track.video && !track.audio) ||
       info.videoTracks.some(
@@ -77,7 +77,7 @@ export function validateVideo(bytes: Buffer): Buffer {
     if (error instanceof HttpError) throw error;
     throw new HttpError(
       400,
-      "Envie um vídeo MP4 válido (H.264, áudio AAC), com até 30 MB.",
+      "Envie um vídeo MP4 válido (H.264 ou HEVC/H.265, áudio AAC), com até 30 MB.",
     );
   }
 }

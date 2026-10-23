@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { validateVideo } from "../lib/video-validation";
 import { MAX_VIDEO_BYTES } from "../lib/media-limits";
 import { issueUploadTicket, verifyUploadTicket } from "../lib/upload-ticket";
+import { validateClientVideo } from "../lib/client-video";
 
 const clip = (seconds: number) =>
   Buffer.from(
@@ -17,6 +18,26 @@ const clip = (seconds: number) =>
 test("real MP4 at 30 seconds is accepted without altering its bytes", () => {
   const bytes = clip(30);
   assert.equal(validateVideo(bytes), bytes);
+});
+
+for (const tag of ["hvc1", "hev1"]) {
+  test(`real HEVC MP4 (${tag}) is accepted, including without browser decoding`, async () => {
+    const bytes = Buffer.from(
+      readFileSync(new URL(`./fixtures/video-hevc-${tag}.mp4.b64`, import.meta.url), "utf8"),
+      "base64",
+    );
+    assert.equal(validateVideo(bytes), bytes);
+    await validateClientVideo(new File([bytes], "hevc.mp4", { type: "video/mp4" }));
+    assert.throws(() => validateVideo(bytes.subarray(0, bytes.length - 10)), /MP4 válido/);
+  });
+}
+
+test("client rejects empty and oversized video before uploading", async () => {
+  await assert.rejects(validateClientVideo(new File([], "empty.mp4")), /vazio/);
+  await assert.rejects(
+    validateClientVideo(new File([new Uint8Array(MAX_VIDEO_BYTES + 1)], "large.mp4")),
+    /30 MB/,
+  );
 });
 
 test("server accepts a clip longer than 30 seconds below the size limit", () => {

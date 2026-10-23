@@ -476,7 +476,7 @@ export function AdminNewsManager({
               </label>
               <label className="block">
                 {uploadKind === "video"
-                  ? "Vídeo MP4 (H.264) · até 30 MB · sem limite de duração"
+                  ? "Vídeo MP4 (H.264 ou HEVC/H.265) · até 30 MB · sem limite de duração"
                   : "Imagem · JPEG, PNG ou WebP · até 15 MB"}
                 <input
                   type="file"
@@ -508,6 +508,12 @@ export function AdminNewsManager({
                   }}
                 />
               </label>
+              {uploadKind === "video" ? (
+                <p className="text-sm text-[var(--site-muted)]">
+                  A reprodução de HEVC depende do navegador e do aparelho.
+                  Para maior compatibilidade, prefira H.264.
+                </p>
+              ) : null}
               {draft.cover_image ? (
                 <div className="space-y-3">
                   {draft.cover_media_type === "video" ? (
