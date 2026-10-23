@@ -43,9 +43,10 @@ export async function generateMetadata({
       siteName: "Jornal SIS · Simulação acadêmica",
       publishedTime: a.published_at,
       modifiedTime: a.updated_at,
-      images: a.coverImage
-        ? [{ url: new URL(a.coverImage, siteUrl).href }]
-        : [],
+      images:
+        a.coverImage && a.coverMediaType !== "video"
+          ? [{ url: new URL(a.coverImage, siteUrl).href }]
+          : [],
     },
     twitter: { card: "summary_large_image", title, description },
   };
@@ -89,7 +90,9 @@ export default async function ArticlePage({
       "@type": "Thing",
       name: "Simulação acadêmica do Simulado Interno Sidarta",
     },
-    ...(a.coverImage ? { image: new URL(a.coverImage, siteUrl).href } : {}),
+    ...(a.coverImage && a.coverMediaType !== "video"
+      ? { image: new URL(a.coverImage, siteUrl).href }
+      : {}),
   };
   return (
     <article className="container-premium py-10">
@@ -166,19 +169,35 @@ export default async function ArticlePage({
         </nav>
         {a.coverImage ? (
           <figure className="w-full overflow-hidden border border-zinc-800 bg-coal">
-            <img
-              src={a.coverImage}
-              alt={a.title}
-              loading="eager"
-              decoding="async"
-              className="h-auto w-full"
-            />
+            {a.coverMediaType === "video" ? (
+              <video
+                src={a.coverImage}
+                controls
+                playsInline
+                preload="metadata"
+                aria-label={a.title}
+                className="max-h-[70vh] w-full bg-black"
+              />
+            ) : (
+              <img
+                src={a.coverImage}
+                alt={a.title}
+                loading="eager"
+                decoding="async"
+                className="h-auto w-full"
+              />
+            )}
             {a.image_caption || a.image_credit ? (
               <figcaption className="space-y-1 p-3 text-sm text-zinc-400">
                 {a.image_caption ? (
                   <p className="whitespace-pre-line">{a.image_caption}</p>
                 ) : null}
-                {a.image_credit ? <p>Imagem: {a.image_credit}</p> : null}
+                {a.image_credit ? (
+                  <p>
+                    {a.coverMediaType === "video" ? "Vídeo" : "Imagem"}:{" "}
+                    {a.image_credit}
+                  </p>
+                ) : null}
               </figcaption>
             ) : null}
           </figure>

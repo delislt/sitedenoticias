@@ -22,6 +22,7 @@ export type Article = {
   edition_id?: string;
   readingTime: string;
   coverImage: string;
+  coverMediaType?: "image" | "video";
   featured?: boolean;
   content: string[];
 };

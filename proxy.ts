@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
     "img-src 'self' blob: data: " +
       supabaseOrigin +
       " https://images.unsplash.com",
+    "media-src 'self' blob: " + supabaseOrigin,
     "connect-src 'self' " +
       supabaseOrigin +
       " https://hcaptcha.com https://*.hcaptcha.com" +

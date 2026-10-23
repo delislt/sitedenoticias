@@ -17,6 +17,7 @@ export type DbArticle = {
   created_at: string;
   reading_time: string;
   cover_image: string;
+  cover_media_type?: "image" | "video";
   content?: { paragraphs: string[] };
   featured: boolean;
   kind: ArticleKind;
@@ -36,6 +37,34 @@ export const listFields =
   "id,slug,title,subtitle,category,author,published_at,updated_at,reading_time,cover_image,featured,kind,tags,edition_id";
 export const detailFields =
   "id,slug,title,subtitle,category,author,published_at,updated_at,reading_time,cover_image,featured,kind,tags,edition_id,content,created_at,status,sources,image_credit,image_caption,correction_note,comments_open,version,author_id";
+export async function withCoverMedia<T extends { cover_image: string }>(
+  rows: T[],
+  db = publicClient(),
+): Promise<(T & { cover_media_type: "image" | "video" })[]> {
+  const ids = Array.from(
+    new Set(
+      rows
+        .map(
+          (row) => /^\/api\/media\/([a-f0-9-]{36})$/.exec(row.cover_image)?.[1],
+        )
+        .filter((id): id is string => !!id),
+    ),
+  );
+  const videos = new Set<string>();
+  if (ids.length) {
+    const { data, error } = await db
+      .from("media_assets")
+      .select("id,mime")
+      .in("id", ids);
+    if (error) throw databaseError(error);
+    for (const asset of data || [])
+      if (asset.mime === "video/mp4") videos.add(asset.id);
+  }
+  return rows.map((row) => ({
+    ...row,
+    cover_media_type: videos.has(row.cover_image.slice(11)) ? "video" : "image",
+  }));
+}
 export function dbToArticle(db: DbArticle): Article {
   return {
     id: db.id,
@@ -49,6 +78,7 @@ export function dbToArticle(db: DbArticle): Article {
       ? readingMinutes(db.content.paragraphs) + " min"
       : db.reading_time,
     coverImage: db.cover_image,
+    coverMediaType: db.cover_media_type || "image",
     featured: db.featured,
     content: db.content?.paragraphs || [],
     created_at: db.created_at,
@@ -85,7 +115,7 @@ export async function listArticles(
     per_page: options.size || 12,
   });
   if (error) throw databaseError(error);
-  const rows = data as DbArticle[];
+  const rows = await withCoverMedia(data as DbArticle[]);
   return {
     articles: rows.map(dbToArticle),
     total: Number(rows[0]?.total || 0),
@@ -101,7 +131,9 @@ export const fetchArticleBySlug = cache(
       .lte("published_at", new Date().toISOString())
       .maybeSingle();
     if (error) throw databaseError(error);
-    return data ? dbToArticle(data as DbArticle) : null;
+    return data
+      ? dbToArticle((await withCoverMedia([data as DbArticle]))[0])
+      : null;
   },
 );
 export async function oldSlugTarget(slug: string) {
@@ -164,6 +196,16 @@ export async function articleContext(article: Article) {
   ]);
   for (const r of [older, newer, related])
     if (r.error) throw databaseError(r.error);
+  const rows = await withCoverMedia(
+    [
+      ...(older.data || []),
+      ...(newer.data || []),
+      ...(related.data || []),
+    ] as DbArticle[],
+    db,
+  );
+  const media = new Map(rows.map((row) => [row.id, row]));
+  const convert = (row: DbArticle) => dbToArticle(media.get(row.id) || row);
   const items = (related.data as DbArticle[])
     .sort(
       (a, b) =>
@@ -172,8 +214,8 @@ export async function articleContext(article: Article) {
     )
     .slice(0, 3);
   return {
-    previous: older.data?.[0] ? dbToArticle(older.data[0] as DbArticle) : null,
-    next: newer.data?.[0] ? dbToArticle(newer.data[0] as DbArticle) : null,
-    related: items.map(dbToArticle),
+    previous: older.data?.[0] ? convert(older.data[0] as DbArticle) : null,
+    next: newer.data?.[0] ? convert(newer.data[0] as DbArticle) : null,
+    related: items.map(convert),
   };
 }

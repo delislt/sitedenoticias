@@ -7,6 +7,7 @@ import {
   validateImage,
   validatePdf,
 } from "@/lib/upload-validation";
+import { validateVideo } from "@/lib/video-validation";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
@@ -21,15 +22,31 @@ export async function POST(request: Request) {
     const form = await boundedForm(request);
     const file = form.get("file");
     const kind = form.get("kind") || "image";
-    if (!(file instanceof File) || !["image", "pdf"].includes(String(kind)))
+    if (
+      !(file instanceof File) ||
+      !["image", "video", "pdf"].includes(String(kind))
+    )
       throw new HttpError(400, "Selecione um arquivo.");
     const bytes = Buffer.from(await file.arrayBuffer());
     const output =
-      kind === "pdf" ? await validatePdf(bytes) : await validateImage(bytes);
+      kind === "pdf"
+        ? await validatePdf(bytes)
+        : kind === "video"
+          ? validateVideo(bytes)
+          : await validateImage(bytes);
     const bucket = kind === "pdf" ? "sis-documents" : "sis-images";
-    const mime = kind === "pdf" ? "application/pdf" : "image/webp";
+    const mime =
+      kind === "pdf"
+        ? "application/pdf"
+        : kind === "video"
+          ? "video/mp4"
+          : "image/webp";
     const id = crypto.randomUUID();
-    const path = user!.id + "/" + id + (kind === "pdf" ? ".pdf" : ".webp");
+    const path =
+      user!.id +
+      "/" +
+      id +
+      (kind === "pdf" ? ".pdf" : kind === "video" ? ".mp4" : ".webp");
     const privileged = privilegedClient();
     const uploaded = await privileged.storage
       .from(bucket)
@@ -40,22 +57,20 @@ export async function POST(request: Request) {
       });
     if (uploaded.error)
       throw new HttpError(503, "Não foi possível armazenar o arquivo.");
-    const registered = await privileged
-      .from("media_assets")
-      .insert({
-        id,
-        owner_id: user!.id,
-        bucket,
-        path,
-        mime,
-        bytes: output.length,
-      });
+    const registered = await privileged.from("media_assets").insert({
+      id,
+      owner_id: user!.id,
+      bucket,
+      path,
+      mime,
+      bytes: output.length,
+    });
     if (registered.error) {
       await privileged.storage.from(bucket).remove([path]);
       throw new HttpError(503, "Não foi possível registrar o arquivo.");
     }
     return NextResponse.json(
-      { id, url: "/api/media/" + id },
+      { id, url: "/api/media/" + id, media_type: kind },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

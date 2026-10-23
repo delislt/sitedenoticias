@@ -80,7 +80,10 @@ export async function readApi<T>(
 ): Promise<T> {
   return requestJson<T>(url, { cache: "no-store", signal }, true);
 }
-export async function uploadFile(file: File, kind: "image" | "pdf" = "image") {
+export async function uploadFile(
+  file: File,
+  kind: "image" | "video" | "pdf" = "image",
+) {
   const form = new FormData();
   form.set("file", file);
   form.set("kind", kind);

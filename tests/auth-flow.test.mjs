@@ -114,6 +114,31 @@ test("article API generates addresses, ignores invalid legacy input, and preserv
   assert.equal(calls.length, 4);
 });
 const domain = load("lib/domain.ts");
+test("cover media uses stored MIME and preserves existing image records", async () => {
+  const videoId = "11111111-1111-4111-8111-111111111111";
+  const imageId = "22222222-2222-4222-8222-222222222222";
+  const original = [
+    { cover_image: "/api/media/" + videoId },
+    { cover_image: "/api/media/" + imageId },
+    { cover_image: "/images/existing.jpg" },
+  ];
+  const { withCoverMedia } = load("lib/supabase-articles.ts", {
+    "server-only": {},
+    react: { cache: (fn) => fn },
+    "@/utils/supabase/public": {},
+    "@/lib/domain": domain,
+    "@/lib/http": { databaseError: (e) => e },
+  });
+  const result = await withCoverMedia(original, {
+    from: () => ({ select: () => ({ in: async () => ({ data: [
+      { id: videoId, mime: "video/mp4" },
+      { id: imageId, mime: "image/webp" },
+    ], error: null }) }) }),
+  });
+  assert.deepEqual(Array.from(result, (row) => row.cover_media_type), ["video", "image", "image"]);
+  assert.ok(original.every((row) => row.cover_media_type === undefined));
+  assert.equal(result[2].cover_image, original[2].cover_image);
+});
 const redirect = (url) => { throw new Error("redirect:" + url); };
 const access = {
   user_id: "reader",

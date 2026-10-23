@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireAccess } from "@/lib/auth";
 import { failure, databaseError, HttpError } from "@/lib/http";
-import { detailFields, listFields } from "@/lib/supabase-articles";
+import {
+  detailFields,
+  listFields,
+  withCoverMedia,
+} from "@/lib/supabase-articles";
 import { pageNumber } from "@/lib/domain";
 import { z } from "zod";
 export async function GET(request: Request) {
@@ -19,7 +23,7 @@ export async function GET(request: Request) {
         .maybeSingle();
       if (error) throw databaseError(error);
       if (!data) throw new HttpError(404, "Matéria indisponível.");
-      return NextResponse.json(data, {
+      return NextResponse.json((await withCoverMedia([data], db))[0], {
         headers: { "Cache-Control": "private, no-store" },
       });
     }

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- Private previews need session cookies; article images retain their natural proportions. */
 import { notFound } from "next/navigation";
 import { requireStaffPage } from "@/lib/auth";
-import { detailFields } from "@/lib/supabase-articles";
+import { detailFields, withCoverMedia } from "@/lib/supabase-articles";
 import { databaseError } from "@/lib/http";
 import { kindLabels, formatDate } from "@/lib/domain";
 export default async function Page({
@@ -18,6 +18,7 @@ export default async function Page({
     .maybeSingle();
   if (error) throw databaseError(error);
   if (!data) notFound();
+  const media = (await withCoverMedia([data], db))[0];
   return (
     <article className="container-premium mx-auto max-w-4xl space-y-6 py-10">
       <p className="card-border p-4 text-gold">
@@ -31,17 +32,33 @@ export default async function Page({
       </p>
       {data.cover_image ? (
         <figure>
-          <img
-            src={data.cover_image}
-            alt={data.title}
-            className="h-auto w-full"
-          />
+          {media.cover_media_type === "video" ? (
+            <video
+              src={data.cover_image}
+              controls
+              playsInline
+              preload="metadata"
+              aria-label={data.title}
+              className="max-h-[70vh] w-full bg-black"
+            />
+          ) : (
+            <img
+              src={data.cover_image}
+              alt={data.title}
+              className="h-auto w-full"
+            />
+          )}
           {data.image_caption || data.image_credit ? (
             <figcaption className="space-y-1 p-3 text-sm text-zinc-400">
               {data.image_caption ? (
                 <p className="whitespace-pre-line">{data.image_caption}</p>
               ) : null}
-              {data.image_credit ? <p>Imagem: {data.image_credit}</p> : null}
+              {data.image_credit ? (
+                <p>
+                  {media.cover_media_type === "video" ? "Vídeo" : "Imagem"}:{" "}
+                  {data.image_credit}
+                </p>
+              ) : null}
             </figcaption>
           ) : null}
         </figure>

@@ -7,6 +7,7 @@ import type { Access, Edition } from "@/lib/domain";
 import { can, statusLabels, kindLabels, formatDate } from "@/lib/domain";
 import { categoryLabels } from "@/data/news";
 import { ApiError, command, readApi, uploadFile } from "@/lib/client-api";
+import { validateClientVideo } from "@/lib/client-video";
 export function AdminNewsManager({
   access,
   editions,
@@ -27,6 +28,7 @@ export function AdminNewsManager({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
+  const [uploadKind, setUploadKind] = useState<"image" | "video">("image");
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
@@ -87,6 +89,7 @@ export function AdminNewsManager({
     operation.current = null;
   }
   function select(a: Partial<DbArticle>) {
+    setUploadKind(a.cover_media_type || "image");
     setDraft(a);
     setBody(a.content?.paragraphs.join("\n\n") || "");
     setSources(a.sources?.map((s) => s.title + " | " + s.url).join("\n") || "");
@@ -459,10 +462,29 @@ export function AdminNewsManager({
                 />
               </label>
               <label className="block">
-                Imagem da matéria · JPEG, PNG ou WebP · até 4 MB
+                Mídia da matéria
+                <select
+                  className="sis-input mt-2 w-full"
+                  value={uploadKind}
+                  onChange={(e) =>
+                    setUploadKind(e.target.value as "image" | "video")
+                  }
+                >
+                  <option value="image">Imagem</option>
+                  <option value="video">Vídeo</option>
+                </select>
+              </label>
+              <label className="block">
+                {uploadKind === "video"
+                  ? "Vídeo MP4 (H.264) · até 30 segundos e 4 MB"
+                  : "Imagem · JPEG, PNG ou WebP · até 4 MB"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={
+                    uploadKind === "video"
+                      ? "video/mp4,.mp4"
+                      : "image/jpeg,image/png,image/webp"
+                  }
                   className="mt-2 block w-full text-sm"
                   disabled={busy}
                   onChange={async (e) => {
@@ -470,10 +492,13 @@ export function AdminNewsManager({
                     if (!file) return;
                     setBusy(true);
                     try {
-                      const r = await uploadFile(file);
+                      if (uploadKind === "video")
+                        await validateClientVideo(file);
+                      const r = await uploadFile(file, uploadKind);
                       field("cover_image", r.url);
+                      field("cover_media_type", uploadKind);
                       setMessage(
-                        "Imagem validada e enviada. Ela só ficará pública com a matéria.",
+                        "Mídia validada e enviada. Ela só ficará pública com a matéria.",
                       );
                     } catch (e) {
                       setMessage((e as Error).message);
@@ -485,36 +510,51 @@ export function AdminNewsManager({
               </label>
               {draft.cover_image ? (
                 <div className="space-y-3">
-                  <img
-                    className="max-h-60 max-w-full object-contain"
-                    src={draft.cover_image}
-                    alt="Prévia da capa"
-                  />
+                  {draft.cover_media_type === "video" ? (
+                    <video
+                      src={draft.cover_image}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      aria-label="Prévia do vídeo"
+                      className="max-h-60 max-w-full bg-black"
+                    />
+                  ) : (
+                    <img
+                      className="max-h-60 max-w-full object-contain"
+                      src={draft.cover_image}
+                      alt="Prévia da capa"
+                    />
+                  )}
                   <button
                     type="button"
                     className="text-sm underline"
-                    onClick={() => field("cover_image", "")}
+                    onClick={() => {
+                      field("cover_image", "");
+                      field("cover_media_type", "image");
+                    }}
                   >
                     Remover vínculo da capa
                   </button>
                 </div>
               ) : null}
               <label className="block">
-                Legenda da imagem
+                Legenda da mídia
                 <textarea
                   className="sis-input mt-2 w-full"
                   maxLength={1000}
                   rows={3}
-                  placeholder="Descreva o que aparece na fotografia e seu contexto."
+                  placeholder="Descreva a imagem ou o vídeo e seu contexto."
                   value={draft.image_caption || ""}
                   onChange={(e) => field("image_caption", e.target.value)}
                 />
                 <span className="mt-1 block text-xs text-zinc-400">
-                  A legenda será exibida abaixo da imagem na matéria.
+                  A legenda será exibida abaixo da imagem ou do vídeo na
+                  matéria.
                 </span>
               </label>
               <label className="block">
-                Crédito da imagem
+                Crédito da mídia
                 <input
                   className="sis-input mt-2 w-full"
                   maxLength={300}

@@ -25,7 +25,19 @@ export function ArticleCard({ article }: { article: Article }) {
     <article className="group card-border overflow-hidden transition hover:border-gold/50">
       <Link href={"/artigo/" + article.slug} className="block cursor-pointer">
         <div className="relative aspect-video w-full overflow-hidden bg-zinc-800">
-          {article.coverImage ? (
+          {article.coverImage && article.coverMediaType === "video" ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 bg-coal text-gold">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-12 w-12"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="m8 5 11 7-11 7z" />
+              </svg>
+              <span className="text-sm font-semibold">Reportagem em vídeo</span>
+            </div>
+          ) : article.coverImage ? (
             <Image
               src={article.coverImage}
               alt={article.title}
