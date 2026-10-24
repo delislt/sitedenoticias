@@ -174,7 +174,7 @@ export default async function ArticlePage({
                 src={a.coverImage}
                 controls
                 playsInline
-                preload="metadata"
+                preload="none"
                 aria-label={a.title}
                 className="max-h-[70vh] w-full bg-black"
               />

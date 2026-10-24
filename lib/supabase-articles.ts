@@ -77,7 +77,7 @@ export function dbToArticle(db: DbArticle): Article {
     readingTime: db.content
       ? readingMinutes(db.content.paragraphs) + " min"
       : db.reading_time,
-    coverImage: db.cover_image,
+    coverImage: db.cover_image.replace(/^\/api\/media\//, "/api/public-media/"),
     coverMediaType: db.cover_media_type || "image",
     featured: db.featured,
     content: db.content?.paragraphs || [],
