@@ -7,10 +7,17 @@ import {
   validatePdf,
   MAX_FILE_BYTES,
 } from "../lib/upload-validation";
-import { sameOrigin, boundedJson } from "../lib/http";
+import { sameOrigin, boundedJson, databaseError } from "../lib/http";
 import { safeReturn, readingMinutes, calendarDate } from "../lib/domain";
 import { calendar } from "../lib/ics";
 import { MAX_IMAGE_BYTES } from "../lib/media-limits";
+test("editorial version conflicts preserve their message and return 409 without becoming retryable outages", () => {
+  const message = "Outra pessoa salvou esta matéria. Recarregue antes de editar.";
+  const error = databaseError({ code: "PT409", message });
+  assert.equal(error.status, 409);
+  assert.equal(error.message, message);
+  assert.equal(databaseError({ code: "P0001", message: "Limite atingido" }).status, 429);
+});
 test("large photos are resized proportionally; WebP transparency and colors survive sanitization", async () => {
   const large = await sharp({
     create: { width: 4000, height: 3000, channels: 3, background: "#2080b0" },

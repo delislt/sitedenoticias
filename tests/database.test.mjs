@@ -38,6 +38,7 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
   );
   await db.exec(await readFile("supabase/migrations/20261023150627_article_video_uploads.sql", "utf8"));
   await db.exec(await readFile("supabase/migrations/20261023154206_media_limit_15mb.sql", "utf8"));
+  await db.exec(await readFile("supabase/migrations/20261024031604_editorial_conflict_no_retry.sql", "utf8"));
   const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   const admin = uid(1),
     reader = uid(4),
@@ -232,13 +233,14 @@ test("Migration and direct API security on isolated PostgreSQL", async (t) => {
           status: "published",
         }),
       );
-      await denied(() =>
+      await assert.rejects(() =>
         mutate(editor, "article.save", {
           ...draft,
           ...article,
           version: 0,
           status: "published",
         }),
+        { code: "PT409" },
       );
       article = await mutate(editor, "article.save", {
         ...draft,

@@ -53,7 +53,7 @@ export function databaseError(error: { code?: string; message?: string }) {
       ? 403
       : error.code === "P0002"
         ? 404
-        : error.code === "40001" || error.code === "23505"
+        : ["PT409", "40001", "23505"].includes(error.code || "")
           ? 409
           : error.code === "P0001"
             ? 429
@@ -62,7 +62,7 @@ export function databaseError(error: { code?: string; message?: string }) {
                 )
               ? 400
               : 503;
-  const message = ["42501", "P0002", "40001", "22023", "P0001"].includes(
+  const message = ["42501", "P0002", "PT409", "40001", "22023", "P0001"].includes(
     error.code || "",
   )
     ? error.message || "Operação recusada."
